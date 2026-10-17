@@ -1,21 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
-import 'core/theme/app_theme.dart';
+import 'app.dart';
+import 'core/utils/date_formatter.dart';
 
-void main() {
-  runApp(const FinApp());
-}
-
-class FinApp extends StatelessWidget {
-  const FinApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'FinApp',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      home: const Scaffold(body: Center(child: Text('FinApp'))),
-    );
-  }
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  Intl.defaultLocale = 'pt_BR';
+  await initializeDateFormats();
+  runApp(const ProviderScope(child: FinApp()));
 }
