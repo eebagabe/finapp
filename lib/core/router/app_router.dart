@@ -1,6 +1,8 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/credit_cards/presentation/credit_card_form_page.dart';
 import '../../features/credit_cards/presentation/credit_cards_page.dart';
 import '../../features/debts/presentation/debts_page.dart';
 import '../../features/registrations/presentation/registrations_page.dart';
@@ -14,10 +16,20 @@ abstract final class AppRoutes {
   static const debts = '/dividas';
   static const cards = '/cartoes';
   static const registrations = '/cadastros';
+
+  static const newCard = '$cards/novo';
+  static String editCard(int id) => '$cards/$id/editar';
 }
+
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
+
+/// Id numérico de um parâmetro de rota.
+int _id(GoRouterState state, [String name = 'id']) =>
+    int.parse(state.pathParameters[name]!);
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
+    navigatorKey: _rootNavigatorKey,
     initialLocation: AppRoutes.summary,
     routes: [
       StatefulShellRoute.indexedStack(
@@ -52,6 +64,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.cards,
                 builder: (context, state) => const CreditCardsPage(),
+                routes: [
+                  GoRoute(
+                    path: 'novo',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => const CreditCardFormPage(),
+                  ),
+                  GoRoute(
+                    path: ':id/editar',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) =>
+                        CreditCardFormPage(cardId: _id(state)),
+                  ),
+                ],
               ),
             ],
           ),
