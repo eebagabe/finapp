@@ -17,6 +17,7 @@ import '../data/card_purchase_repository.dart';
 import '../data/credit_card_repository.dart';
 import '../data/invoice_repository.dart';
 import '../domain/invoice.dart';
+import 'widgets/card_limit_bar.dart';
 
 /// Fatura do cartão mês a mês, com os lançamentos que a compõem.
 class CreditCardDetailPage extends ConsumerStatefulWidget {
@@ -59,6 +60,14 @@ class _CreditCardDetailPageState extends ConsumerState<CreditCardDetailPage> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               children: [
+                if (card?.limitCents case final limit?)
+                  if (ref.watch(usedLimitsProvider).value?[widget.cardId]
+                      case final used?) ...[
+                    AppCard(
+                      child: CardLimitBar(limitCents: limit, usedCents: used),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                 _InvoiceMonthSelector(
                   month: month,
                   onChanged: (value) => setState(() => _month = value),
@@ -131,6 +140,15 @@ class _InvoiceContent extends ConsumerWidget {
         );
   }
 
+  Future<void> _togglePaid(WidgetRef ref) => ref
+      .read(monthlyRecordRepositoryProvider)
+      .setPaid(
+        RecordSource.cardInvoice,
+        invoice.card.id,
+        invoice.month,
+        invoice.isPaid ? null : DateTime.now(),
+      );
+
   Future<void> _deletePurchase(
     BuildContext context,
     WidgetRef ref,
@@ -202,6 +220,22 @@ class _InvoiceContent extends ConsumerWidget {
                 ),
                 style: TextButton.styleFrom(padding: EdgeInsets.zero),
               ),
+              if (!invoice.isEmpty || invoice.isPaid) ...[
+                const SizedBox(height: 4),
+                invoice.isPaid
+                    ? OutlinedButton.icon(
+                        onPressed: () => _togglePaid(ref),
+                        icon: const Icon(Icons.undo),
+                        label: Text(
+                          'Desfazer pagamento (${formatDate(invoice.paidAt!)})',
+                        ),
+                      )
+                    : FilledButton.icon(
+                        onPressed: () => _togglePaid(ref),
+                        icon: const Icon(Icons.check),
+                        label: const Text('Marcar fatura como paga'),
+                      ),
+              ],
             ],
           ),
         ),

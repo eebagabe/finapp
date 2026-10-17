@@ -8,6 +8,7 @@ import '../../../core/providers/database_provider.dart';
 import '../../fixed_expenses/data/fixed_expense_repository.dart';
 import '../../transactions/data/monthly_record_repository.dart';
 import '../../transactions/domain/monthly_record.dart';
+import '../domain/card_limit.dart';
 import '../domain/invoice.dart';
 import 'card_purchase_repository.dart';
 import 'credit_card_repository.dart';
@@ -48,6 +49,28 @@ class InvoiceRepository {
     ];
   }
 
+  /// Limite em uso de cada cartão (id → centavos). Ver [usedLimitCents].
+  Future<Map<int, int>> getUsedLimits() async {
+    final cards = await _cards.getAll();
+    final purchases = await _purchases.getAll();
+    final fixedExpenses = await _fixedExpenses.getAll();
+    final records = MonthlyRecordIndex(await _records.getAll());
+    final today = DateTime.now();
+    return {
+      for (final card in cards)
+        card.id: usedLimitCents(
+          card: card,
+          purchases: purchases,
+          fixedExpenses: fixedExpenses,
+          records: records,
+          today: today,
+        ),
+    };
+  }
+
+  Stream<Map<int, int>> watchUsedLimits() =>
+      _db.watchComputed(_watchedTables, getUsedLimits);
+
   Stream<List<Invoice>> watchInvoicesDueIn(YearMonth month) =>
       _db.watchComputed(_watchedTables, () => getInvoicesDueIn(month));
 
@@ -70,6 +93,10 @@ class InvoiceRepository {
 
 final invoiceRepositoryProvider = Provider<InvoiceRepository>(
   (ref) => InvoiceRepository(ref.watch(databaseProvider)),
+);
+
+final usedLimitsProvider = StreamProvider<Map<int, int>>(
+  (ref) => ref.watch(invoiceRepositoryProvider).watchUsedLimits(),
 );
 
 final invoiceProvider = StreamProvider.family<Invoice?, (int, YearMonth)>(

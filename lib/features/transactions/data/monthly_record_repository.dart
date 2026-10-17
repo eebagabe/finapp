@@ -20,6 +20,11 @@ class MonthlyRecordRepository {
     return rows.map(_toDomain).toList();
   }
 
+  Future<List<MonthlyRecord>> getAll() async {
+    final rows = await _db.select(_db.monthlyRecords).get();
+    return rows.map(_toDomain).toList();
+  }
+
   /// Define (ou remove, com `null`) o valor real do item no mês.
   Future<void> setAmountOverride(
     RecordSource source,

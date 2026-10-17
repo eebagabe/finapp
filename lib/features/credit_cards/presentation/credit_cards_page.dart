@@ -6,9 +6,10 @@ import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/feedback.dart';
-import '../../../core/widgets/money_text.dart';
 import '../data/credit_card_repository.dart';
+import '../data/invoice_repository.dart';
 import '../domain/credit_card.dart';
+import 'widgets/card_limit_bar.dart';
 
 class CreditCardsPage extends ConsumerWidget {
   const CreditCardsPage({super.key});
@@ -44,51 +45,72 @@ class CreditCardsPage extends ConsumerWidget {
   }
 }
 
-class _CreditCardTile extends StatelessWidget {
+class _CreditCardTile extends ConsumerWidget {
   const _CreditCardTile({required this.card});
 
   final CreditCard card;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
-    final muted = context.appColors.mutedText;
+    final scheme = Theme.of(context).colorScheme;
+    final used = ref.watch(usedLimitsProvider).value?[card.id];
+    final limit = card.limitCents;
+
     return AppCard(
       onTap: () => context.push(AppRoutes.cardDetail(card.id)),
-      child: Row(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          CircleAvatar(
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-            child: Icon(
-              Icons.credit_card,
-              color: Theme.of(context).colorScheme.primary,
+          Container(
+            padding: const EdgeInsets.all(AppTheme.spacing),
+            decoration: BoxDecoration(
+              gradient: AppTheme.brandGradient(context),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(card.name, style: textTheme.titleMedium),
-                const SizedBox(height: 2),
-                Text(
-                  'Melhor dia ${card.closingDay} · vence dia ${card.dueDay}',
-                  style: textTheme.bodySmall?.copyWith(color: muted),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        card.name,
+                        style: textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Melhor dia ${card.closingDay} · vence dia ${card.dueDay}',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.contactless_outlined,
+                  color: Colors.white.withValues(alpha: 0.9),
                 ),
               ],
             ),
           ),
-          if (card.limitCents != null)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  'Limite',
-                  style: textTheme.labelSmall?.copyWith(color: muted),
-                ),
-                MoneyText(card.limitCents!, style: textTheme.bodyMedium),
-              ],
-            ),
+          Padding(
+            padding: const EdgeInsets.all(AppTheme.spacing),
+            child: limit == null
+                ? Text(
+                    'Informe o limite no cartão para ver quanto está disponível',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: context.appColors.mutedText,
+                    ),
+                  )
+                : used == null
+                ? LinearProgressIndicator(color: scheme.primary)
+                : CardLimitBar(limitCents: limit, usedCents: used),
+          ),
         ],
       ),
     );
