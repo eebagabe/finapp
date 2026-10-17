@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/credit_cards/presentation/credit_card_form_page.dart';
 import '../../features/credit_cards/presentation/credit_cards_page.dart';
 import '../../features/debts/presentation/debts_page.dart';
+import '../../features/fixed_expenses/presentation/fixed_expense_form_page.dart';
 import '../../features/incomes/presentation/income_form_page.dart';
 import '../../features/registrations/presentation/registrations_page.dart';
 import '../../features/summary/presentation/summary_page.dart';
@@ -23,6 +24,9 @@ abstract final class AppRoutes {
 
   static const newIncome = '$registrations/receitas/nova';
   static String editIncome(int id) => '$registrations/receitas/$id';
+
+  static const newFixedExpense = '$registrations/despesas/nova';
+  static String editFixedExpense(int id) => '$registrations/despesas/$id';
 }
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -100,6 +104,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     parentNavigatorKey: _rootNavigatorKey,
                     builder: (context, state) =>
                         IncomeFormPage(incomeId: _id(state)),
+                  ),
+                  GoRoute(
+                    path: 'despesas/nova',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => const FixedExpenseFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'despesas/:id',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) =>
+                        FixedExpenseFormPage(expenseId: _id(state)),
                   ),
                 ],
               ),
