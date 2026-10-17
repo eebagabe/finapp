@@ -13,6 +13,7 @@ import '../../features/fixed_expenses/presentation/fixed_expense_form_page.dart'
 import '../../features/incomes/presentation/income_form_page.dart';
 import '../../features/registrations/presentation/registrations_page.dart';
 import '../../features/summary/presentation/summary_page.dart';
+import '../../features/transactions/presentation/one_off_entry_form_page.dart';
 import '../../features/transactions/presentation/transactions_page.dart';
 import '../widgets/app_shell.dart';
 
@@ -22,6 +23,8 @@ abstract final class AppRoutes {
   static const debts = '/dividas';
   static const cards = '/cartoes';
   static const registrations = '/cadastros';
+
+  static const newOneOffEntry = '$transactions/novo';
 
   static const newDebt = '$debts/nova';
   static String debtDetail(int id) => '$debts/$id';
@@ -66,6 +69,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.transactions,
                 builder: (context, state) => const TransactionsPage(),
+                routes: [
+                  GoRoute(
+                    path: 'novo',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => const OneOffEntryFormPage(),
+                  ),
+                ],
               ),
             ],
           ),
