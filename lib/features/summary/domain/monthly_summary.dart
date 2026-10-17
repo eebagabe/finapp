@@ -1,4 +1,5 @@
 import '../../../core/domain/year_month.dart';
+import '../../categories/domain/category.dart';
 import '../../credit_cards/domain/credit_card.dart';
 import '../../credit_cards/domain/invoice.dart';
 import '../../debts/domain/debt.dart';
@@ -35,6 +36,7 @@ class MonthItem {
     this.defaultAmountCents,
     this.paidAt,
     this.cardName,
+    this.categoryName,
   });
 
   final MonthItemType type;
@@ -59,6 +61,7 @@ class MonthItem {
   /// Cartão em que a despesa fixa é cobrada. Nesse caso o valor já está na
   /// fatura e o item não é somado de novo.
   final String? cardName;
+  final String? categoryName;
 
   bool get isIncome => type.isIncome;
 
@@ -135,8 +138,10 @@ MonthlySummary calculateMonthlySummary({
   required Iterable<Invoice> invoices,
   required Iterable<OneOffEntry> oneOffEntries,
   required MonthlyRecordIndex records,
+  Iterable<Category> categories = const [],
 }) {
   final cardNames = {for (final card in cards) card.id: card.name};
+  final categoryNames = {for (final c in categories) c.id: c.name};
   final items = <MonthItem>[];
 
   for (final income in incomes) {
@@ -152,6 +157,7 @@ MonthlySummary calculateMonthlySummary({
         defaultAmountCents: income.amountCents,
         date: month.dateAt(income.dayOfMonth),
         paidAt: record?.paidAt,
+        categoryName: categoryNames[income.categoryId],
       ),
     );
   }
@@ -171,6 +177,7 @@ MonthlySummary calculateMonthlySummary({
         date: expense.dueDateIn(month),
         paidAt: cardName == null ? record?.paidAt : null,
         cardName: cardName,
+        categoryName: categoryNames[expense.categoryId],
       ),
     );
   }
@@ -222,6 +229,7 @@ MonthlySummary calculateMonthlySummary({
         amountCents: entry.amountCents,
         date: entry.date,
         paidAt: entry.paidAt,
+        categoryName: categoryNames[entry.categoryId],
       ),
     );
   }

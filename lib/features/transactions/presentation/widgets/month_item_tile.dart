@@ -27,6 +27,7 @@ class MonthItemTile extends ConsumerWidget {
     final details = [
       formatDayMonth(item.date),
       ?item.subtitle,
+      ?item.categoryName,
       if (item.isPaid)
         '${item.isIncome ? 'recebido' : 'pago'} em ${formatDayMonth(item.paidAt!)}',
       if (item.isAdjusted) 'padrão ${formatCents(item.defaultAmountCents!)}',

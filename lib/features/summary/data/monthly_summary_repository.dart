@@ -4,6 +4,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/database/watch_query.dart';
 import '../../../core/domain/year_month.dart';
 import '../../../core/providers/database_provider.dart';
+import '../../categories/data/category_repository.dart';
 import '../../credit_cards/data/credit_card_repository.dart';
 import '../../credit_cards/data/invoice_repository.dart';
 import '../../debts/data/debt_repository.dart';
@@ -32,6 +33,7 @@ class MonthlySummaryRepository {
       records: MonthlyRecordIndex(
         await MonthlyRecordRepository(_db).getBetween(month, month),
       ),
+      categories: await CategoryRepository(_db).getAll(),
     );
   }
 
