@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/providers/database_provider.dart';
 import '../domain/credit_card.dart';
+import 'card_purchase_repository.dart';
 
 class CreditCardRepository {
   CreditCardRepository(this._db);
@@ -31,10 +32,23 @@ class CreditCardRepository {
   Future<int> create(CreditCardInput input) =>
       _db.into(_db.creditCards).insert(_toCompanion(input));
 
-  Future<void> update(int id, CreditCardInput input) async {
-    await (_db.update(
-      _db.creditCards,
-    )..where((t) => t.id.equals(id))).write(_toCompanion(input));
+  /// Atualiza o cartão. Se o melhor dia ou o vencimento mudarem, recalcula
+  /// em qual fatura cai cada parcela das compras já lançadas.
+  Future<void> update(int id, CreditCardInput input) {
+    return _db.transaction(() async {
+      final before = await (_db.select(
+        _db.creditCards,
+      )..where((t) => t.id.equals(id))).getSingle();
+      await (_db.update(
+        _db.creditCards,
+      )..where((t) => t.id.equals(id))).write(_toCompanion(input));
+      final daysChanged =
+          before.closingDay != input.closingDay ||
+          before.dueDay != input.dueDay;
+      if (daysChanged) {
+        await CardPurchaseRepository(_db).redistributeCard(id);
+      }
+    });
   }
 
   Future<void> delete(int id) async {

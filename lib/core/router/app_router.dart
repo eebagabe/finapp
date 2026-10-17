@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/credit_cards/presentation/card_purchase_form_page.dart';
+import '../../features/credit_cards/presentation/credit_card_detail_page.dart';
 import '../../features/credit_cards/presentation/credit_card_form_page.dart';
 import '../../features/credit_cards/presentation/credit_cards_page.dart';
 import '../../features/debts/presentation/debt_detail_page.dart';
@@ -26,7 +28,9 @@ abstract final class AppRoutes {
   static String editDebt(int id) => '$debts/$id/editar';
 
   static const newCard = '$cards/novo';
+  static String cardDetail(int id) => '$cards/$id';
   static String editCard(int id) => '$cards/$id/editar';
+  static String newCardPurchase(int id) => '$cards/$id/lancamento';
 
   static const newIncome = '$registrations/receitas/nova';
   static String editIncome(int id) => '$registrations/receitas/$id';
@@ -106,10 +110,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) => const CreditCardFormPage(),
                   ),
                   GoRoute(
-                    path: ':id/editar',
+                    path: ':id',
                     parentNavigatorKey: _rootNavigatorKey,
                     builder: (context, state) =>
-                        CreditCardFormPage(cardId: _id(state)),
+                        CreditCardDetailPage(cardId: _id(state)),
+                    routes: [
+                      GoRoute(
+                        path: 'editar',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) =>
+                            CreditCardFormPage(cardId: _id(state)),
+                      ),
+                      GoRoute(
+                        path: 'lancamento',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) =>
+                            CardPurchaseFormPage(cardId: _id(state)),
+                      ),
+                    ],
                   ),
                 ],
               ),

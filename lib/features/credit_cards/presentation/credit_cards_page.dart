@@ -54,7 +54,7 @@ class _CreditCardTile extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final muted = context.appColors.mutedText;
     return AppCard(
-      onTap: () => context.push(AppRoutes.editCard(card.id)),
+      onTap: () => context.push(AppRoutes.cardDetail(card.id)),
       child: Row(
         children: [
           CircleAvatar(

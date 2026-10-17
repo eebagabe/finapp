@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/widgets/feedback.dart';
@@ -94,7 +95,7 @@ class _CreditCardFormState extends ConsumerState<_CreditCardForm> {
     );
     if (!confirmed) return;
     await ref.read(creditCardRepositoryProvider).delete(widget.initial!.id);
-    if (mounted) context.pop();
+    if (mounted) context.go(AppRoutes.cards);
   }
 
   @override
