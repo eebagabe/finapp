@@ -18,14 +18,17 @@ class FixedExpenseFormPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (expenseId == null) return const _FixedExpenseForm();
-    return ref
-        .watch(fixedExpenseProvider(expenseId!))
-        .when(
-          data: (expense) => _FixedExpenseForm(initial: expense),
-          loading: () => const Scaffold(body: LoadingView()),
-          error: (error, _) => Scaffold(body: ErrorView(error)),
-        );
+    // Espera os cartões carregarem: o vínculo é o valor inicial do campo.
+    final cards = ref.watch(creditCardsProvider);
+    final expense = expenseId == null
+        ? const AsyncValue<FixedExpense?>.data(null)
+        : ref.watch(fixedExpenseProvider(expenseId!));
+    if (cards.hasError) return Scaffold(body: ErrorView(cards.error!));
+    if (expense.hasError) return Scaffold(body: ErrorView(expense.error!));
+    if (!cards.hasValue || !expense.hasValue) {
+      return const Scaffold(body: LoadingView());
+    }
+    return _FixedExpenseForm(initial: expense.value);
   }
 }
 
@@ -100,7 +103,7 @@ class _FixedExpenseFormState extends ConsumerState<_FixedExpenseForm> {
 
   @override
   Widget build(BuildContext context) {
-    final cards = ref.watch(creditCardsProvider).value ?? const [];
+    final cards = ref.watch(creditCardsProvider).requireValue;
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Editar despesa' : 'Nova despesa fixa'),
