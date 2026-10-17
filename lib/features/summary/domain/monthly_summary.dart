@@ -30,6 +30,7 @@ class MonthItem {
     required this.title,
     required this.amountCents,
     required this.date,
+    this.parentId,
     this.subtitle,
     this.defaultAmountCents,
     this.paidAt,
@@ -41,6 +42,9 @@ class MonthItem {
   /// Id da receita, despesa fixa, parcela de dívida, cartão ou avulso,
   /// conforme [type].
   final int sourceId;
+
+  /// Id da dívida, quando o item é uma parcela.
+  final int? parentId;
   final String title;
   final String? subtitle;
   final int amountCents;
@@ -179,6 +183,7 @@ MonthlySummary calculateMonthlySummary({
         MonthItem(
           type: MonthItemType.debtInstallment,
           sourceId: installment.id,
+          parentId: debt.id,
           title: debt.description,
           subtitle: 'parcela ${installment.number} de $total',
           amountCents: installment.amountCents,
