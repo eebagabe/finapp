@@ -2,18 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/domain/installments.dart';
 import '../../../core/domain/year_month.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/money_formatter.dart';
-import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/form_fields.dart';
 import '../data/card_purchase_repository.dart';
 import '../data/credit_card_repository.dart';
 import '../domain/card_purchase.dart';
-import '../domain/credit_card.dart';
+import 'widgets/purchase_fields.dart';
 
 /// Lançamento de compra no cartão, à vista ou parcelada.
 ///
@@ -29,8 +26,6 @@ class CardPurchaseFormPage extends ConsumerStatefulWidget {
 }
 
 class _CardPurchaseFormPageState extends ConsumerState<CardPurchaseFormPage> {
-  static const _quickInstallments = [2, 3, 4, 5, 6, 10, 12];
-
   final _formKey = GlobalKey<FormState>();
   final _description = TextEditingController();
   final _amount = TextEditingController();
@@ -127,40 +122,16 @@ class _CardPurchaseFormPageState extends ConsumerState<CardPurchaseFormPage> {
                         setState(() => _purchaseDate = dateOnly(date)),
                   ),
                   const FormGap(),
-                  SwitchListTile(
-                    title: const Text('Parcelado'),
-                    value: _isInstallment,
-                    onChanged: (value) =>
+                  InstallmentSelector(
+                    enabled: _isInstallment,
+                    controller: _installments,
+                    onEnabledChanged: (value) =>
                         setState(() => _isInstallment = value),
-                    contentPadding: EdgeInsets.zero,
+                    onCountChanged: () => setState(() {}),
                   ),
-                  if (_isInstallment) ...[
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final count in _quickInstallments)
-                          ChoiceChip(
-                            label: Text('${count}x'),
-                            selected: _installmentCount == count,
-                            onSelected: (_) => setState(
-                              () => _installments.text = count.toString(),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const FormGap(),
-                    IntField(
-                      controller: _installments,
-                      label: 'Quantidade de parcelas',
-                      min: 2,
-                      max: 48,
-                      onChanged: (_) => setState(() {}),
-                    ),
-                  ],
                   const FormGap(),
                   if (card != null)
-                    _PurchasePreview(
+                    PurchasePreview(
                       card: card,
                       purchaseDate: _purchaseDate,
                       totalCents: parseCents(_amount.text),
@@ -171,64 +142,6 @@ class _CardPurchaseFormPageState extends ConsumerState<CardPurchaseFormPage> {
                 ],
               ),
             ),
-    );
-  }
-}
-
-/// Mostra em qual fatura a compra vai cair e o valor das parcelas.
-class _PurchasePreview extends StatelessWidget {
-  const _PurchasePreview({
-    required this.card,
-    required this.purchaseDate,
-    required this.totalCents,
-    required this.installmentCount,
-  });
-
-  final CreditCard card;
-  final DateTime purchaseDate;
-  final int? totalCents;
-  final int installmentCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final invoiceMonth = card.invoiceMonthFor(purchaseDate);
-    final dueDate = card.invoiceDueDate(invoiceMonth);
-    final total = totalCents;
-    final textTheme = Theme.of(context).textTheme;
-
-    String? installmentsText;
-    if (total != null && installmentCount >= 1) {
-      final parts = splitInstallments(total, installmentCount);
-      installmentsText = installmentCount == 1
-          ? 'À vista: ${formatCents(total)}'
-          : parts.first == parts.last
-          ? '${installmentCount}x de ${formatCents(parts.first)}'
-          : '${installmentCount}x de ${formatCents(parts.first)} '
-                '(última ${formatCents(parts.last)})';
-    }
-
-    return AppCard(
-      color: Theme.of(context).colorScheme.primaryContainer
-          .withValues(alpha: 0.35),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            installmentCount > 1
-                ? '1ª parcela na fatura de ${formatMonthYear(invoiceMonth)}'
-                : 'Entra na fatura de ${formatMonthYear(invoiceMonth)}',
-            style: textTheme.titleSmall,
-          ),
-          Text(
-            'Vencimento em ${formatDate(dueDate)}',
-            style: textTheme.bodySmall,
-          ),
-          if (installmentsText != null) ...[
-            const SizedBox(height: 6),
-            Text(installmentsText, style: textTheme.bodyMedium),
-          ],
-        ],
-      ),
     );
   }
 }
