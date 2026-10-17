@@ -132,4 +132,20 @@ void main() {
       expect(parts.map((p) => p.amountCents), [3333, 3333, 3334]);
     });
   });
+
+  test('distributePurchase respeita a fatura escolhida manualmente', () {
+    final parts = InvoiceRules.distributePurchase(
+      totalCents: 30000,
+      installmentCount: 3,
+      purchaseDate: DateTime(2026, 9, 30),
+      closingDay: 1,
+      dueDay: 8,
+      firstInvoiceMonth: const YearMonth(2026, 12),
+    );
+    expect(parts.map((p) => p.invoiceMonth), const [
+      YearMonth(2026, 12),
+      YearMonth(2027, 1),
+      YearMonth(2027, 2),
+    ]);
+  });
 }

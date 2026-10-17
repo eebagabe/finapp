@@ -40,6 +40,7 @@ class _OneOffEntryFormPageState extends ConsumerState<OneOffEntryFormPage> {
   /// Cartão escolhido; `null` = fora do cartão.
   int? _cardId;
   bool _isInstallment = false;
+  YearMonth? _invoiceMonth;
 
   bool get _onCard => _kind == EntryKind.expense && _cardId != null;
 
@@ -67,6 +68,7 @@ class _OneOffEntryFormPageState extends ConsumerState<OneOffEntryFormPage> {
               totalCents: amount,
               purchaseDate: _date,
               installmentCount: _installmentCount,
+              firstInvoiceMonth: _invoiceMonth,
             ),
           );
     } else {
@@ -135,7 +137,10 @@ class _OneOffEntryFormPageState extends ConsumerState<OneOffEntryFormPage> {
             DateField(
               label: _onCard ? 'Data da compra' : 'Data',
               value: _date,
-              onChanged: (date) => setState(() => _date = dateOnly(date)),
+              onChanged: (date) => setState(() {
+                _date = dateOnly(date);
+                _invoiceMonth = null;
+              }),
             ),
             if (_kind == EntryKind.expense) ...[
               const FormGap(),
@@ -153,7 +158,10 @@ class _OneOffEntryFormPageState extends ConsumerState<OneOffEntryFormPage> {
                       child: Text('Cartão ${c.name}'),
                     ),
                 ],
-                onChanged: (value) => setState(() => _cardId = value),
+                onChanged: (value) => setState(() {
+                  _cardId = value;
+                  _invoiceMonth = null;
+                }),
               ),
             ],
             if (_onCard) ...[
@@ -172,6 +180,9 @@ class _OneOffEntryFormPageState extends ConsumerState<OneOffEntryFormPage> {
                   purchaseDate: _date,
                   totalCents: parseCents(_amount.text),
                   installmentCount: _installmentCount,
+                  invoiceMonth: _invoiceMonth,
+                  onInvoiceMonthChanged: (value) =>
+                      setState(() => _invoiceMonth = value),
                 ),
             ],
             const SizedBox(height: 32),

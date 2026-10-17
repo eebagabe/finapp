@@ -39,6 +39,10 @@ class CardPurchaseRepository {
           purchaseDate: row.purchaseDate,
           installmentCount: row.installmentCount,
           installments: byPurchase[row.id] ?? const [],
+          firstInvoiceMonth: row.firstInvoiceMonth == null
+              ? null
+              : YearMonth.fromKey(row.firstInvoiceMonth!),
+          categoryId: row.categoryId,
         ),
     ];
   }
@@ -56,6 +60,8 @@ class CardPurchaseRepository {
               totalCents: draft.totalCents,
               purchaseDate: draft.purchaseDate,
               installmentCount: draft.installmentCount,
+              firstInvoiceMonth: Value(draft.firstInvoiceMonth?.key),
+              categoryId: Value(draft.categoryId),
             ),
           );
       await _distribute(
@@ -64,6 +70,7 @@ class CardPurchaseRepository {
         totalCents: draft.totalCents,
         installmentCount: draft.installmentCount,
         purchaseDate: draft.purchaseDate,
+        firstInvoiceMonth: draft.firstInvoiceMonth,
       );
       return purchaseId;
     });
@@ -90,6 +97,9 @@ class CardPurchaseRepository {
           totalCents: purchase.totalCents,
           installmentCount: purchase.installmentCount,
           purchaseDate: purchase.purchaseDate,
+          firstInvoiceMonth: purchase.firstInvoiceMonth == null
+              ? null
+              : YearMonth.fromKey(purchase.firstInvoiceMonth!),
         );
       }
     });
@@ -101,6 +111,7 @@ class CardPurchaseRepository {
     required int totalCents,
     required int installmentCount,
     required DateTime purchaseDate,
+    YearMonth? firstInvoiceMonth,
   }) async {
     final card = await (_db.select(
       _db.creditCards,
@@ -111,6 +122,7 @@ class CardPurchaseRepository {
       purchaseDate: purchaseDate,
       closingDay: card.closingDay,
       dueDay: card.dueDay,
+      firstInvoiceMonth: firstInvoiceMonth,
     );
     await _db.batch((batch) {
       batch.insertAll(_db.cardPurchaseInstallments, [

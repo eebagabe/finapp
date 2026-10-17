@@ -48,7 +48,8 @@ abstract final class InvoiceRules {
       invoiceMonth.dateAt(dueDay);
 
   /// Distribui uma compra parcelada nas faturas: a parcela 1 cai na fatura da
-  /// data da compra e cada parcela seguinte na fatura do mês seguinte.
+  /// data da compra (ou em [firstInvoiceMonth], se informado) e cada parcela
+  /// seguinte na fatura do mês seguinte.
   ///
   /// Centavos restantes da divisão ficam na última parcela.
   static List<InvoiceInstallment> distributePurchase({
@@ -57,12 +58,11 @@ abstract final class InvoiceRules {
     required DateTime purchaseDate,
     required int closingDay,
     required int dueDay,
+    YearMonth? firstInvoiceMonth,
   }) {
-    final firstInvoice = invoiceMonthFor(
-      purchaseDate,
-      closingDay: closingDay,
-      dueDay: dueDay,
-    );
+    final firstInvoice =
+        firstInvoiceMonth ??
+        invoiceMonthFor(purchaseDate, closingDay: closingDay, dueDay: dueDay);
     final amounts = splitInstallments(totalCents, installmentCount);
     return [
       for (var i = 0; i < installmentCount; i++)

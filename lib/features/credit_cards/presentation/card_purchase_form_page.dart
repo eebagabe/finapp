@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/form_fields.dart';
+import '../../categories/presentation/category_field.dart';
 import '../data/card_purchase_repository.dart';
 import '../data/credit_card_repository.dart';
 import '../domain/card_purchase.dart';
@@ -34,6 +35,8 @@ class _CardPurchaseFormPageState extends ConsumerState<CardPurchaseFormPage> {
   int? _cardId;
   DateTime _purchaseDate = dateOnly(DateTime.now());
   bool _isInstallment = false;
+  YearMonth? _invoiceMonth;
+  int? _categoryId;
 
   @override
   void initState() {
@@ -63,6 +66,8 @@ class _CardPurchaseFormPageState extends ConsumerState<CardPurchaseFormPage> {
             totalCents: parseCents(_amount.text)!,
             purchaseDate: _purchaseDate,
             installmentCount: _installmentCount,
+            firstInvoiceMonth: _invoiceMonth,
+            categoryId: _categoryId,
           ),
         );
     if (mounted) context.pop();
@@ -95,7 +100,10 @@ class _CardPurchaseFormPageState extends ConsumerState<CardPurchaseFormPage> {
                       ],
                       validator: (value) =>
                           value == null ? 'Escolha o cartão' : null,
-                      onChanged: (value) => setState(() => _cardId = value),
+                      onChanged: (value) => setState(() {
+                        _cardId = value;
+                        _invoiceMonth = null;
+                      }),
                     ),
                     const FormGap(),
                   ],
@@ -118,8 +126,15 @@ class _CardPurchaseFormPageState extends ConsumerState<CardPurchaseFormPage> {
                   DateField(
                     label: 'Data da compra',
                     value: _purchaseDate,
-                    onChanged: (date) =>
-                        setState(() => _purchaseDate = dateOnly(date)),
+                    onChanged: (date) => setState(() {
+                      _purchaseDate = dateOnly(date);
+                      _invoiceMonth = null;
+                    }),
+                  ),
+                  const FormGap(),
+                  CategoryField(
+                    value: _categoryId,
+                    onChanged: (value) => setState(() => _categoryId = value),
                   ),
                   const FormGap(),
                   InstallmentSelector(
@@ -136,6 +151,9 @@ class _CardPurchaseFormPageState extends ConsumerState<CardPurchaseFormPage> {
                       purchaseDate: _purchaseDate,
                       totalCents: parseCents(_amount.text),
                       installmentCount: _installmentCount,
+                      invoiceMonth: _invoiceMonth,
+                      onInvoiceMonthChanged: (value) =>
+                          setState(() => _invoiceMonth = value),
                     ),
                   const SizedBox(height: 32),
                   FilledButton(onPressed: _save, child: const Text('Salvar')),

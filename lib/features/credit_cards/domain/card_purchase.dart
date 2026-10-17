@@ -28,6 +28,8 @@ class CardPurchase {
     required this.purchaseDate,
     required this.installmentCount,
     required this.installments,
+    this.firstInvoiceMonth,
+    this.categoryId,
   });
 
   final int id;
@@ -37,6 +39,10 @@ class CardPurchase {
   final DateTime purchaseDate;
   final int installmentCount;
   final List<CardPurchaseInstallment> installments;
+
+  /// Fatura da 1ª parcela escolhida manualmente (nulo = regra do cartão).
+  final YearMonth? firstInvoiceMonth;
+  final int? categoryId;
 
   bool get isInstallment => installmentCount > 1;
 
@@ -57,6 +63,8 @@ class CardPurchaseDraft {
     required this.totalCents,
     required this.purchaseDate,
     required this.installmentCount,
+    this.firstInvoiceMonth,
+    this.categoryId,
   });
 
   final int cardId;
@@ -66,4 +74,9 @@ class CardPurchaseDraft {
 
   /// 1 = à vista.
   final int installmentCount;
+
+  /// Fatura da 1ª parcela, quando diferente da calculada pela regra de
+  /// fechamento do cartão.
+  final YearMonth? firstInvoiceMonth;
+  final int? categoryId;
 }
