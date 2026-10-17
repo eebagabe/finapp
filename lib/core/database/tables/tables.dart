@@ -6,6 +6,7 @@ import '../../../features/transactions/domain/entry_types.dart';
 /// Valores monetários são sempre armazenados em centavos (`int`).
 /// Meses de referência são armazenados como `yyyymm` (ver `YearMonth.key`).
 
+@DataClassName('CreditCardRow')
 class CreditCards extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text().withLength(min: 1, max: 60)();
@@ -18,6 +19,7 @@ class CreditCards extends Table {
 }
 
 /// Receitas fixas (mensais). Receitas avulsas ficam em [OneOffEntries].
+@DataClassName('IncomeRow')
 class Incomes extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get description => text().withLength(min: 1, max: 120)();
@@ -29,6 +31,7 @@ class Incomes extends Table {
   IntColumn get startMonth => integer()();
 }
 
+@DataClassName('FixedExpenseRow')
 class FixedExpenses extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get description => text().withLength(min: 1, max: 120)();
@@ -47,6 +50,7 @@ class FixedExpenses extends Table {
   IntColumn get startMonth => integer()();
 }
 
+@DataClassName('DebtRow')
 class Debts extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get description => text().withLength(min: 1, max: 120)();
@@ -58,6 +62,7 @@ class Debts extends Table {
 }
 
 @TableIndex(name: 'idx_debt_installments_due_date', columns: {#dueDate})
+@DataClassName('DebtInstallmentRow')
 class DebtInstallments extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get debtId =>
@@ -68,6 +73,7 @@ class DebtInstallments extends Table {
   DateTimeColumn get paidAt => dateTime().nullable()();
 }
 
+@DataClassName('CardPurchaseRow')
 class CardPurchases extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get cardId =>
@@ -84,6 +90,7 @@ class CardPurchases extends Table {
   name: 'idx_card_purchase_installments_invoice_month',
   columns: {#invoiceMonth},
 )
+@DataClassName('CardPurchaseInstallmentRow')
 class CardPurchaseInstallments extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get purchaseId =>
@@ -97,6 +104,7 @@ class CardPurchaseInstallments extends Table {
 
 /// Receitas e despesas avulsas, fora do cartão.
 @TableIndex(name: 'idx_one_off_entries_date', columns: {#date})
+@DataClassName('OneOffEntryRow')
 class OneOffEntries extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get kind => textEnum<EntryKind>()();
@@ -110,6 +118,7 @@ class OneOffEntries extends Table {
 /// fixas e faturas). Os itens recorrentes não são gerados mês a mês; só o que
 /// muda em um mês é registrado aqui.
 @TableIndex(name: 'idx_monthly_records_month', columns: {#month})
+@DataClassName('MonthlyRecordRow')
 class MonthlyRecords extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get sourceType => textEnum<RecordSource>()();
