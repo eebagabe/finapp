@@ -32,6 +32,9 @@ Falta conseguir:  R$ 1.500,00
   pagar a fatura, o valor volta.
 - **Antecipação de parcelas** de dívidas com desconto opcional (informa quanto
   pagou; o app calcula o desconto). Desfazer restaura valor e vencimento.
+- **Saldo previsto**: informe o saldo em conta no resumo; cada mês (do atual em
+  diante) mostra saldo em conta + a receber − a pagar, acumulado, e quanto
+  realmente falta conseguir.
 - **Categorias** editáveis nas configurações e escolhidas nos lançamentos.
 - **Configurações**: cadastros fixos, categorias, tema (sistema/claro/escuro)
   e "Zerar sistema" (apaga todos os dados; mantém o tema).
@@ -49,6 +52,7 @@ Falta conseguir:  R$ 1.500,00
 | Antecipação: valor pago dividido proporcionalmente entre as parcelas | `lib/features/debts/domain/debt.dart` |
 | Próxima ocorrência de item mensal | `lib/core/domain/year_month.dart` |
 | Resumo mensal e "Falta conseguir" | `lib/features/summary/domain/monthly_summary.dart` |
+| Saldo previsto (saldo em conta + pendentes acumulados) | `lib/features/summary/domain/balance_projection.dart` |
 
 Cada fatura é identificada pelo **mês de vencimento**. Exemplo com melhor dia 1
 e vencimento dia 8: compra em 30/09 → fatura de 08/10; compra em 01/10 → fatura

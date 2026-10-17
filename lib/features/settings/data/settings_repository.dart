@@ -11,6 +11,7 @@ class SettingsRepository {
   final AppDatabase _db;
 
   static const _themeModeKey = 'theme_mode';
+  static const _bankBalanceKey = 'bank_balance';
 
   Stream<ThemeMode> watchThemeMode() {
     final query = _db.select(_db.appSettings)
@@ -26,8 +27,28 @@ class SettingsRepository {
         AppSettingsCompanion.insert(key: _themeModeKey, value: mode.name),
       );
 
-  /// Apaga todos os dados cadastrados. Ver [AppDatabase.resetAllData].
-  Future<void> resetAllData() => _db.resetAllData();
+  /// Saldo atual em conta, em centavos. `null` se nunca foi informado.
+  Future<int?> getBankBalance() async {
+    final query = _db.select(_db.appSettings)
+      ..where((t) => t.key.equals(_bankBalanceKey));
+    final row = await query.getSingleOrNull();
+    return row == null ? null : int.tryParse(row.value);
+  }
+
+  Future<void> setBankBalance(int cents) => _db
+      .into(_db.appSettings)
+      .insertOnConflictUpdate(
+        AppSettingsCompanion.insert(key: _bankBalanceKey, value: '$cents'),
+      );
+
+  /// Apaga todos os dados cadastrados e o saldo em conta; mantém o tema.
+  /// Ver [AppDatabase.resetAllData].
+  Future<void> resetAllData() => _db.transaction(() async {
+    await _db.resetAllData();
+    await (_db.delete(
+      _db.appSettings,
+    )..where((t) => t.key.equals(_bankBalanceKey))).go();
+  });
 }
 
 final settingsRepositoryProvider = Provider<SettingsRepository>(

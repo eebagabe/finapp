@@ -7,6 +7,7 @@ import '../../../core/widgets/month_selector.dart';
 import '../data/monthly_summary_repository.dart';
 import '../domain/monthly_summary.dart';
 import 'widgets/month_items_section.dart';
+import 'widgets/projected_balance_card.dart';
 import 'widgets/summary_cards.dart';
 
 /// Tela inicial: resumo do mês selecionado.
@@ -51,6 +52,7 @@ class _SummaryContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         BalanceCard(summary: summary),
+        ProjectedBalanceCard(month: month),
         const SizedBox(height: 12),
         TotalsRow(summary: summary),
         const SizedBox(height: 12),

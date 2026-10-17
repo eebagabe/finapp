@@ -12,6 +12,7 @@ import 'package:finapp/features/fixed_expenses/data/fixed_expense_repository.dar
 import 'package:finapp/features/fixed_expenses/domain/fixed_expense.dart';
 import 'package:finapp/features/incomes/data/income_repository.dart';
 import 'package:finapp/features/incomes/domain/income.dart';
+import 'package:finapp/features/settings/data/settings_repository.dart';
 import 'package:finapp/features/summary/data/monthly_summary_repository.dart';
 import 'package:finapp/features/summary/domain/monthly_summary.dart';
 import 'package:finapp/features/transactions/data/month_item_actions.dart';
@@ -115,5 +116,46 @@ void main() {
 
     final next = await summaries.load(month.next);
     expect(next.ofType(MonthItemType.cardInvoice).single.amountCents, 3990);
+  });
+
+  group('saldo previsto', () {
+    test('sem saldo em conta informado não projeta', () async {
+      expect(await summaries.loadProjection(month, current: month), isNull);
+    });
+
+    test('soma o saldo em conta aos pendentes, acumulando os meses', () async {
+      final settings = SettingsRepository(db);
+      await settings.setBankBalance(100000);
+
+      final now = await summaries.loadProjection(month, current: month);
+      expect(now!.bankBalanceCents, 100000);
+      expect(now.projectedCents, 100000 + 300000 - 15000 - 50000);
+
+      final next = await summaries.loadProjection(month.next, current: month);
+      expect(next!.projectedCents, now.projectedCents + 300000 - 65000);
+
+      expect(
+        await summaries.loadProjection(month.previous, current: month),
+        isNull,
+      );
+    });
+
+    test('itens pagos já saíram do saldo em conta', () async {
+      await SettingsRepository(db).setBankBalance(-20000);
+      final installment = (await summaries.load(month))
+          .ofType(MonthItemType.debtInstallment)
+          .single;
+      await actions.setPaid(installment, month, DateTime.now());
+
+      final projection = await summaries.loadProjection(month, current: month);
+      expect(projection!.projectedCents, -20000 + 300000 - 15000);
+    });
+
+    test('zerar sistema apaga o saldo em conta', () async {
+      final settings = SettingsRepository(db);
+      await settings.setBankBalance(100000);
+      await settings.resetAllData();
+      expect(await settings.getBankBalance(), isNull);
+    });
   });
 }

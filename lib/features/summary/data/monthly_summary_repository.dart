@@ -10,9 +10,11 @@ import '../../credit_cards/data/invoice_repository.dart';
 import '../../debts/data/debt_repository.dart';
 import '../../fixed_expenses/data/fixed_expense_repository.dart';
 import '../../incomes/data/income_repository.dart';
+import '../../settings/data/settings_repository.dart';
 import '../../transactions/data/monthly_record_repository.dart';
 import '../../transactions/data/one_off_entry_repository.dart';
 import '../../transactions/domain/monthly_record.dart';
+import '../domain/balance_projection.dart';
 import '../domain/monthly_summary.dart';
 
 /// Carrega os dados do mês e monta o [MonthlySummary].
@@ -40,6 +42,30 @@ class MonthlySummaryRepository {
   /// Recalcula sempre que qualquer tabela mudar.
   Stream<MonthlySummary> watch(YearMonth month) =>
       _db.watchComputed(_db.allTables, () => load(month));
+
+  /// Saldo previsto ao fim de [month], somando os pendentes do mês [current]
+  /// até [month]. `null` para meses passados ou sem saldo em conta informado.
+  Future<BalanceProjection?> loadProjection(
+    YearMonth month, {
+    required YearMonth current,
+  }) async {
+    if (month.isBefore(current)) return null;
+    final bankBalance = await SettingsRepository(_db).getBankBalance();
+    if (bankBalance == null) return null;
+    final summaries = <MonthlySummary>[];
+    for (var m = current; !m.isAfter(month); m = m.next) {
+      summaries.add(await load(m));
+    }
+    return projectBalance(bankBalanceCents: bankBalance, months: summaries);
+  }
+
+  Stream<BalanceProjection?> watchProjection(
+    YearMonth month, {
+    required YearMonth current,
+  }) => _db.watchComputed(
+    _db.allTables,
+    () => loadProjection(month, current: current),
+  );
 }
 
 final monthlySummaryRepositoryProvider = Provider<MonthlySummaryRepository>(
@@ -49,3 +75,10 @@ final monthlySummaryRepositoryProvider = Provider<MonthlySummaryRepository>(
 final monthlySummaryProvider = StreamProvider.family<MonthlySummary, YearMonth>(
   (ref, month) => ref.watch(monthlySummaryRepositoryProvider).watch(month),
 );
+
+final balanceProjectionProvider =
+    StreamProvider.family<BalanceProjection?, YearMonth>(
+      (ref, month) => ref
+          .watch(monthlySummaryRepositoryProvider)
+          .watchProjection(month, current: YearMonth.now()),
+    );
