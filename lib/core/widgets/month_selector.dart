@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/year_month.dart';
 import '../providers/selected_month_provider.dart';
+import '../theme/app_theme.dart';
 import '../utils/date_formatter.dart';
 
 /// Seletor de mês (anterior / próximo) ligado ao [selectedMonthProvider].
@@ -15,37 +16,52 @@ class MonthSelector extends ConsumerWidget {
     final notifier = ref.read(selectedMonthProvider.notifier);
     final isCurrent = month == YearMonth.now();
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        IconButton(
-          tooltip: 'Mês anterior',
-          icon: const Icon(Icons.chevron_left),
-          onPressed: notifier.previous,
-        ),
-        GestureDetector(
-          onTap: isCurrent ? null : () => notifier.select(YearMonth.now()),
-          child: Column(
-            children: [
-              Text(
-                formatMonthYear(month),
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              if (!isCurrent)
-                Text(
-                  'toque para voltar ao mês atual',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-            ],
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radius),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            tooltip: 'Mês anterior',
+            icon: Icon(Icons.chevron_left, color: scheme.primary),
+            onPressed: notifier.previous,
           ),
-        ),
-        IconButton(
-          tooltip: 'Próximo mês',
-          icon: const Icon(Icons.chevron_right),
-          onPressed: notifier.next,
-        ),
-      ],
+          Expanded(
+            child: GestureDetector(
+              onTap: isCurrent ? null : () => notifier.select(YearMonth.now()),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  children: [
+                    Text(
+                      formatMonthYear(month),
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    if (!isCurrent)
+                      Text(
+                        'toque para voltar ao mês atual',
+                        style: Theme.of(context).textTheme.labelSmall
+                            ?.copyWith(color: scheme.primary),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Próximo mês',
+            icon: Icon(Icons.chevron_right, color: scheme.primary),
+            onPressed: notifier.next,
+          ),
+        ],
+      ),
     );
   }
 }

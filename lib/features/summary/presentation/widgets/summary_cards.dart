@@ -15,12 +15,12 @@ class BalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final inDeficit = summary.shortfallCents > 0;
 
     return AppCard(
-      color: inDeficit ? colors.deficitContainer : scheme.primary,
+      color: inDeficit ? colors.deficitContainer : null,
+      gradient: inDeficit ? null : AppTheme.brandGradient(context),
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,15 +47,23 @@ class BalanceCard extends StatelessWidget {
             Text(
               'Saldo do mês',
               style: textTheme.titleSmall?.copyWith(
-                color: scheme.onPrimary.withValues(alpha: 0.85),
+                color: Colors.white.withValues(alpha: 0.85),
               ),
             ),
             const SizedBox(height: 4),
             MoneyText(
               summary.balanceCents,
-              color: scheme.onPrimary,
+              color: Colors.white,
               style: textTheme.headlineLarge?.copyWith(
                 fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'você fecha o mês no azul',
+              style: textTheme.bodySmall?.copyWith(
+                color: Colors.white.withValues(alpha: 0.8),
               ),
             ),
           ],
@@ -119,12 +127,22 @@ class _TotalTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: textTheme.bodySmall?.copyWith(
-                  color: context.appColors.mutedText,
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.14),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 14, color: color),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: context.appColors.mutedText,
+                  ),
                 ),
               ),
             ],

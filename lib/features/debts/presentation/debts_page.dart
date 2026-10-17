@@ -78,20 +78,19 @@ class _TotalRemainingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return AppCard(
-      color: scheme.primary,
+      gradient: AppTheme.brandGradient(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Total restante em dívidas',
-            style: TextStyle(color: scheme.onPrimary.withValues(alpha: 0.85)),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.85)),
           ),
           const SizedBox(height: 4),
           MoneyText(
             cents,
-            color: scheme.onPrimary,
+            color: Colors.white,
             style: Theme.of(context).textTheme.headlineSmall
                 ?.copyWith(fontWeight: FontWeight.w600),
           ),
