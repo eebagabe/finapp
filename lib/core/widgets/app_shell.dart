@@ -26,7 +26,7 @@ class AppShell extends StatelessWidget {
       'Dívidas',
     ),
     _Destination(Icons.credit_card_outlined, Icons.credit_card, 'Cartões'),
-    _Destination(Icons.tune_outlined, Icons.tune, 'Cadastros'),
+    _Destination(Icons.settings_outlined, Icons.settings, 'Configurações'),
   ];
 
   @override

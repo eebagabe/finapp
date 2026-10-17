@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/categories/presentation/categories_page.dart';
 import '../../features/credit_cards/presentation/card_purchase_form_page.dart';
 import '../../features/credit_cards/presentation/credit_card_detail_page.dart';
 import '../../features/credit_cards/presentation/credit_card_form_page.dart';
@@ -12,7 +13,8 @@ import '../../features/debts/presentation/debt_prepay_page.dart';
 import '../../features/debts/presentation/debts_page.dart';
 import '../../features/fixed_expenses/presentation/fixed_expense_form_page.dart';
 import '../../features/incomes/presentation/income_form_page.dart';
-import '../../features/registrations/presentation/registrations_page.dart';
+import '../../features/settings/presentation/recurring_pages.dart';
+import '../../features/settings/presentation/settings_page.dart';
 import '../../features/summary/presentation/summary_page.dart';
 import '../../features/transactions/presentation/one_off_entry_form_page.dart';
 import '../../features/transactions/presentation/transactions_page.dart';
@@ -23,7 +25,7 @@ abstract final class AppRoutes {
   static const transactions = '/lancamentos';
   static const debts = '/dividas';
   static const cards = '/cartoes';
-  static const registrations = '/cadastros';
+  static const settings = '/configuracoes';
 
   static const newOneOffEntry = '$transactions/novo';
 
@@ -37,11 +39,15 @@ abstract final class AppRoutes {
   static String editCard(int id) => '$cards/$id/editar';
   static String newCardPurchase(int id) => '$cards/$id/lancamento';
 
-  static const newIncome = '$registrations/receitas/nova';
-  static String editIncome(int id) => '$registrations/receitas/$id';
+  static const incomes = '$settings/receitas';
+  static const newIncome = '$incomes/nova';
+  static String editIncome(int id) => '$incomes/$id';
 
-  static const newFixedExpense = '$registrations/despesas/nova';
-  static String editFixedExpense(int id) => '$registrations/despesas/$id';
+  static const fixedExpenses = '$settings/despesas';
+  static const newFixedExpense = '$fixedExpenses/nova';
+  static String editFixedExpense(int id) => '$fixedExpenses/$id';
+
+  static const categories = '$settings/categorias';
 }
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -154,30 +160,47 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppRoutes.registrations,
-                builder: (context, state) => const RegistrationsPage(),
+                path: AppRoutes.settings,
+                builder: (context, state) => const SettingsPage(),
                 routes: [
                   GoRoute(
-                    path: 'receitas/nova',
-                    parentNavigatorKey: _rootNavigatorKey,
-                    builder: (context, state) => const IncomeFormPage(),
+                    path: 'despesas',
+                    builder: (context, state) => const FixedExpensesPage(),
+                    routes: [
+                      GoRoute(
+                        path: 'nova',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) =>
+                            const FixedExpenseFormPage(),
+                      ),
+                      GoRoute(
+                        path: ':id',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) =>
+                            FixedExpenseFormPage(expenseId: _id(state)),
+                      ),
+                    ],
                   ),
                   GoRoute(
-                    path: 'receitas/:id',
-                    parentNavigatorKey: _rootNavigatorKey,
-                    builder: (context, state) =>
-                        IncomeFormPage(incomeId: _id(state)),
+                    path: 'receitas',
+                    builder: (context, state) => const IncomesPage(),
+                    routes: [
+                      GoRoute(
+                        path: 'nova',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) => const IncomeFormPage(),
+                      ),
+                      GoRoute(
+                        path: ':id',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) =>
+                            IncomeFormPage(incomeId: _id(state)),
+                      ),
+                    ],
                   ),
                   GoRoute(
-                    path: 'despesas/nova',
-                    parentNavigatorKey: _rootNavigatorKey,
-                    builder: (context, state) => const FixedExpenseFormPage(),
-                  ),
-                  GoRoute(
-                    path: 'despesas/:id',
-                    parentNavigatorKey: _rootNavigatorKey,
-                    builder: (context, state) =>
-                        FixedExpenseFormPage(expenseId: _id(state)),
+                    path: 'categorias',
+                    builder: (context, state) => const CategoriesPage(),
                   ),
                 ],
               ),

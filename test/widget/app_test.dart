@@ -85,6 +85,45 @@ void main() {
     await dispose(tester, db);
   });
 
+  testWidgets('menu inferior cabe em tela estreita, inclusive no escuro', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+
+    final db = await pumpApp(tester);
+
+    expect(find.text('Configurações'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await dispose(tester, db);
+  });
+
+  testWidgets('configurações lista cadastros fixos e zerar sistema', (
+    tester,
+  ) async {
+    final db = await pumpApp(tester);
+
+    await tester.tap(find.text('Configurações'));
+    await settle(tester);
+    expect(find.text('Despesas fixas'), findsOneWidget);
+    expect(find.text('Receitas fixas'), findsOneWidget);
+    expect(find.text('Categorias'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Zerar sistema'), 100);
+    expect(find.text('Zerar sistema'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Despesas fixas'), -100);
+
+    await tester.tap(find.text('Despesas fixas'));
+    await settle(tester);
+    expect(find.text('Aluguel'), findsOneWidget);
+    expect(find.textContaining('Próxima:'), findsOneWidget);
+
+    await dispose(tester, db);
+  });
+
   testWidgets('lançamento marcado como fixo vira despesa fixa', (tester) async {
     final db = await pumpApp(tester);
 
