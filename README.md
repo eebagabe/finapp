@@ -23,6 +23,18 @@ Falta conseguir:  R$ 1.500,00
   automaticamente e atalho "valor total da fatura".
 - **Lançamentos** do mês com filtro por tipo e status, marcar como pago/recebido
   (com data) e desfazer.
+- **Próxima data** em receitas e despesas fixas: valem todo mês a partir dela
+  (ex.: salário R$ 3.000, próxima data 7 de novembro).
+- **Lançamento fixo**: no novo lançamento, marcar "Despesa fixa"/"Receita fixa"
+  salva direto nas configurações.
+- **Mês da fatura ajustável** em compras no cartão.
+- **Limite disponível** do cartão: faturas não pagas consomem o limite; ao
+  pagar a fatura, o valor volta.
+- **Antecipação de parcelas** de dívidas com desconto opcional (informa quanto
+  pagou; o app calcula o desconto). Desfazer restaura valor e vencimento.
+- **Categorias** editáveis nas configurações e escolhidas nos lançamentos.
+- **Configurações**: cadastros fixos, categorias, tema (sistema/claro/escuro)
+  e "Zerar sistema" (apaga todos os dados; mantém o tema).
 
 ## Regras de negócio
 
@@ -33,6 +45,9 @@ Falta conseguir:  R$ 1.500,00
 | Parcelas restantes ↔ data da última parcela | `lib/features/debts/domain/debt_schedule.dart` |
 | Fechamento de fatura: compra **no melhor dia ou depois** vai para a fatura seguinte | `lib/features/credit_cards/domain/invoice_rules.dart` |
 | Montagem da fatura (compras + despesas fixas vinculadas + valor informado) | `lib/features/credit_cards/domain/invoice.dart` |
+| Limite usado do cartão | `lib/features/credit_cards/domain/card_limit.dart` |
+| Antecipação: valor pago dividido proporcionalmente entre as parcelas | `lib/features/debts/domain/debt.dart` |
+| Próxima ocorrência de item mensal | `lib/core/domain/year_month.dart` |
 | Resumo mensal e "Falta conseguir" | `lib/features/summary/domain/monthly_summary.dart` |
 
 Cada fatura é identificada pelo **mês de vencimento**. Exemplo com melhor dia 1
@@ -102,6 +117,9 @@ Copie `android/key.properties.example` para `android/key.properties` e preencha.
 Sem esse arquivo, o release é assinado com a chave de debug.
 
 ### APK (instalar direto no celular)
+
+Para atualizar um app já instalado, incremente o número após o `+` em
+`version` no `pubspec.yaml` e assine com a mesma chave.
 
 ```bash
 flutter build apk --release
