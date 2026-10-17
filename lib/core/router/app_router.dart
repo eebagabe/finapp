@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/credit_cards/presentation/credit_card_form_page.dart';
 import '../../features/credit_cards/presentation/credit_cards_page.dart';
+import '../../features/debts/presentation/debt_detail_page.dart';
+import '../../features/debts/presentation/debt_form_page.dart';
 import '../../features/debts/presentation/debts_page.dart';
 import '../../features/fixed_expenses/presentation/fixed_expense_form_page.dart';
 import '../../features/incomes/presentation/income_form_page.dart';
@@ -18,6 +20,10 @@ abstract final class AppRoutes {
   static const debts = '/dividas';
   static const cards = '/cartoes';
   static const registrations = '/cadastros';
+
+  static const newDebt = '$debts/nova';
+  static String debtDetail(int id) => '$debts/$id';
+  static String editDebt(int id) => '$debts/$id/editar';
 
   static const newCard = '$cards/novo';
   static String editCard(int id) => '$cards/$id/editar';
@@ -64,6 +70,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.debts,
                 builder: (context, state) => const DebtsPage(),
+                routes: [
+                  GoRoute(
+                    path: 'nova',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => const DebtFormPage(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) =>
+                        DebtDetailPage(debtId: _id(state)),
+                    routes: [
+                      GoRoute(
+                        path: 'editar',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) =>
+                            DebtFormPage(debtId: _id(state)),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
