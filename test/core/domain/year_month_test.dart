@@ -84,4 +84,33 @@ void main() {
       expect(const YearMonth(2026, 3).contains(DateTime(2026, 3, 31)), isTrue);
     });
   });
+
+  group('nextMonthlyDate', () {
+    const oct = YearMonth(2026, 10);
+
+    test('dia já passou no mês atual → mês seguinte', () {
+      expect(
+        nextMonthlyDate(start: oct, day: 7, from: DateTime(2026, 10, 16)),
+        DateTime(2026, 11, 7),
+      );
+    });
+
+    test('dia ainda vai chegar no mês atual (inclusive hoje)', () {
+      expect(
+        nextMonthlyDate(start: oct, day: 16, from: DateTime(2026, 10, 16, 15)),
+        DateTime(2026, 10, 16),
+      );
+    });
+
+    test('início no futuro → primeira ocorrência no início', () {
+      expect(
+        nextMonthlyDate(
+          start: const YearMonth(2027, 2),
+          day: 31,
+          from: DateTime(2026, 10, 16),
+        ),
+        DateTime(2027, 2, 28),
+      );
+    });
+  });
 }

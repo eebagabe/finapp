@@ -16,6 +16,22 @@ DateTime addMonths(DateTime date, int months) {
   return target.dateAt(date.day);
 }
 
+/// Próxima ocorrência, a partir de [from] (inclusive), de algo que se repete
+/// todo mês no dia [day] desde [start].
+///
+/// Salário todo dia 7 desde out/2026, consultado em 16/10/2026 → 07/11/2026.
+DateTime nextMonthlyDate({
+  required YearMonth start,
+  required int day,
+  required DateTime from,
+}) {
+  final today = dateOnly(from);
+  final current = YearMonth.fromDate(today);
+  final month = start.isAfter(current) ? start : current;
+  final date = month.dateAt(day);
+  return date.isBefore(today) ? month.next.dateAt(day) : date;
+}
+
 /// Um mês de um ano específico, sem dia. Usado como referência de competência
 /// (resumo mensal, fatura, ajustes do mês).
 ///

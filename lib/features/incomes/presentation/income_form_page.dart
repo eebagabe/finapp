@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/domain/year_month.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/money_formatter.dart';
 import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/form_fields.dart';
+import '../../categories/presentation/category_field.dart';
 import '../data/income_repository.dart';
 import '../domain/income.dart';
 
@@ -41,8 +43,10 @@ class _IncomeFormState extends ConsumerState<_IncomeForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _description;
   late final TextEditingController _amount;
-  late final TextEditingController _day;
+  late DateTime _nextDate;
+  bool _dateChanged = false;
   late bool _active;
+  int? _categoryId;
 
   bool get _isEditing => widget.initial != null;
 
@@ -54,15 +58,15 @@ class _IncomeFormState extends ConsumerState<_IncomeForm> {
     _amount = TextEditingController(
       text: MoneyField.initialText(income?.amountCents),
     );
-    _day = TextEditingController(text: income?.dayOfMonth.toString());
+    _nextDate = income?.nextDate() ?? dateOnly(DateTime.now());
     _active = income?.active ?? true;
+    _categoryId = income?.categoryId;
   }
 
   @override
   void dispose() {
     _description.dispose();
     _amount.dispose();
-    _day.dispose();
     super.dispose();
   }
 
@@ -71,8 +75,13 @@ class _IncomeFormState extends ConsumerState<_IncomeForm> {
     final input = IncomeInput(
       description: _description.text,
       amountCents: parseCents(_amount.text)!,
-      dayOfMonth: int.parse(_day.text),
+      dayOfMonth: _nextDate.day,
       active: _active,
+      // Na edição, só muda o início se a próxima data foi alterada.
+      startMonth: !_isEditing || _dateChanged
+          ? YearMonth.fromDate(_nextDate)
+          : null,
+      categoryId: _categoryId,
     );
     final repository = ref.read(incomeRepositoryProvider);
     if (_isEditing) {
@@ -125,11 +134,19 @@ class _IncomeFormState extends ConsumerState<_IncomeForm> {
             const FormGap(),
             MoneyField(controller: _amount, label: 'Valor'),
             const FormGap(),
-            IntField(
-              controller: _day,
-              label: 'Dia do recebimento',
-              min: 1,
-              max: 31,
+            DateField(
+              label: 'Próxima data de recebimento',
+              helperText: 'Repete todo mês neste dia, a partir desta data',
+              value: _nextDate,
+              onChanged: (date) => setState(() {
+                _nextDate = dateOnly(date);
+                _dateChanged = true;
+              }),
+            ),
+            const FormGap(),
+            CategoryField(
+              value: _categoryId,
+              onChanged: (value) => setState(() => _categoryId = value),
             ),
             const FormGap(),
             SwitchListTile(

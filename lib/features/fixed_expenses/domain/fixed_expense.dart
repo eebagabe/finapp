@@ -13,6 +13,7 @@ class FixedExpense {
     required this.active,
     required this.startMonth,
     this.creditCardId,
+    this.categoryId,
   });
 
   final int id;
@@ -25,6 +26,7 @@ class FixedExpense {
   final bool active;
   final YearMonth startMonth;
   final int? creditCardId;
+  final int? categoryId;
 
   bool get isOnCard => creditCardId != null;
 
@@ -33,6 +35,13 @@ class FixedExpense {
 
   /// Data em que a despesa ocorre em [month].
   DateTime dueDateIn(YearMonth month) => month.dateAt(dueDay);
+
+  /// Próximo vencimento a partir de [from] (hoje, por padrão).
+  DateTime nextDate([DateTime? from]) => nextMonthlyDate(
+    start: startMonth,
+    day: dueDay,
+    from: from ?? DateTime.now(),
+  );
 }
 
 class FixedExpenseInput {
@@ -42,6 +51,8 @@ class FixedExpenseInput {
     required this.dueDay,
     required this.active,
     this.creditCardId,
+    this.startMonth,
+    this.categoryId,
   });
 
   final String description;
@@ -49,4 +60,9 @@ class FixedExpenseInput {
   final int dueDay;
   final bool active;
   final int? creditCardId;
+
+  /// Primeiro mês em que vale. Na criação, nulo = mês atual; na edição, nulo
+  /// mantém o mês já salvo.
+  final YearMonth? startMonth;
+  final int? categoryId;
 }

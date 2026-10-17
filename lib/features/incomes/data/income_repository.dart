@@ -32,11 +32,14 @@ class IncomeRepository {
     );
   }
 
-  /// Cria a receita valendo a partir do mês atual.
+  /// Cria a receita valendo a partir de [IncomeInput.startMonth] ou, sem ele,
+  /// do mês atual.
   Future<int> create(IncomeInput input) => _db
       .into(_db.incomes)
       .insert(
-        _toCompanion(input).copyWith(startMonth: Value(YearMonth.now().key)),
+        _toCompanion(input).copyWith(
+          startMonth: Value((input.startMonth ?? YearMonth.now()).key),
+        ),
       );
 
   Future<void> update(int id, IncomeInput input) async {
@@ -54,6 +57,10 @@ class IncomeRepository {
     amountCents: Value(input.amountCents),
     dayOfMonth: Value(input.dayOfMonth),
     active: Value(input.active),
+    categoryId: Value(input.categoryId),
+    startMonth: input.startMonth == null
+        ? const Value.absent()
+        : Value(input.startMonth!.key),
   );
 
   static Income _toDomain(IncomeRow row) => Income(
@@ -63,6 +70,7 @@ class IncomeRepository {
     dayOfMonth: row.dayOfMonth,
     active: row.active,
     startMonth: YearMonth.fromKey(row.startMonth),
+    categoryId: row.categoryId,
   );
 }
 

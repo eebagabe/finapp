@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/recurring_item_tile.dart';
 import '../data/income_repository.dart';
@@ -29,7 +30,9 @@ class IncomesList extends ConsumerWidget {
                     final income = incomes[index];
                     return RecurringItemTile(
                       title: income.description,
-                      subtitle: 'Todo dia ${income.dayOfMonth}',
+                      subtitle:
+                          'Próxima: ${formatDayMonthName(income.nextDate())} · '
+                          'todo dia ${income.dayOfMonth}',
                       amountCents: income.amountCents,
                       active: income.active,
                       onTap: () =>

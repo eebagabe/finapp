@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/recurring_item_tile.dart';
 import '../../credit_cards/data/credit_card_repository.dart';
@@ -34,9 +35,11 @@ class FixedExpensesList extends ConsumerWidget {
                     final cardName = cardNames[expense.creditCardId];
                     return RecurringItemTile(
                       title: expense.description,
-                      subtitle: cardName == null
-                          ? 'Todo dia ${expense.dueDay}'
-                          : 'Todo dia ${expense.dueDay} · no cartão $cardName',
+                      subtitle: [
+                        'Próxima: ${formatDayMonthName(expense.nextDate())}',
+                        'todo dia ${expense.dueDay}',
+                        if (cardName != null) 'no cartão $cardName',
+                      ].join(' · '),
                       amountCents: expense.defaultAmountCents,
                       active: expense.active,
                       onTap: () =>

@@ -32,11 +32,14 @@ class FixedExpenseRepository {
     );
   }
 
-  /// Cria a despesa valendo a partir do mês atual.
+  /// Cria a despesa valendo a partir de [FixedExpenseInput.startMonth] ou,
+  /// sem ele, do mês atual.
   Future<int> create(FixedExpenseInput input) => _db
       .into(_db.fixedExpenses)
       .insert(
-        _toCompanion(input).copyWith(startMonth: Value(YearMonth.now().key)),
+        _toCompanion(input).copyWith(
+          startMonth: Value((input.startMonth ?? YearMonth.now()).key),
+        ),
       );
 
   Future<void> update(int id, FixedExpenseInput input) async {
@@ -56,6 +59,10 @@ class FixedExpenseRepository {
         dueDay: Value(input.dueDay),
         active: Value(input.active),
         creditCardId: Value(input.creditCardId),
+        categoryId: Value(input.categoryId),
+        startMonth: input.startMonth == null
+            ? const Value.absent()
+            : Value(input.startMonth!.key),
       );
 
   static FixedExpense _toDomain(FixedExpenseRow row) => FixedExpense(
@@ -66,6 +73,7 @@ class FixedExpenseRepository {
     active: row.active,
     startMonth: YearMonth.fromKey(row.startMonth),
     creditCardId: row.creditCardId,
+    categoryId: row.categoryId,
   );
 }
 

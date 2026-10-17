@@ -16,6 +16,10 @@ String formatDate(DateTime date) =>
 String formatDayMonth(DateTime date) =>
     DateFormat('dd/MM', _locale).format(date);
 
+/// `7 de novembro`
+String formatDayMonthName(DateTime date) =>
+    DateFormat("d 'de' MMMM", _locale).format(date);
+
 /// `Novembro de 2026`
 String formatMonthYear(YearMonth month) {
   final text = DateFormat("MMMM 'de' y", _locale).format(month.firstDay);
