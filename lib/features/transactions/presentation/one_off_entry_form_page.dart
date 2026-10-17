@@ -4,20 +4,30 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/domain/year_month.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/money_formatter.dart';
+import '../../../core/widgets/feedback.dart';
 import '../../../core/widgets/form_fields.dart';
+import '../../categories/presentation/category_field.dart';
 import '../../credit_cards/data/card_purchase_repository.dart';
 import '../../credit_cards/data/credit_card_repository.dart';
 import '../../credit_cards/domain/card_purchase.dart';
 import '../../credit_cards/presentation/widgets/purchase_fields.dart';
+import '../../fixed_expenses/data/fixed_expense_repository.dart';
+import '../../fixed_expenses/domain/fixed_expense.dart';
+import '../../incomes/data/income_repository.dart';
+import '../../incomes/domain/income.dart';
 import '../data/one_off_entry_repository.dart';
 import '../domain/entry_types.dart';
 import '../domain/one_off_entry.dart';
 
-/// Lançamento avulso: receita ou despesa de um mês específico.
+/// Novo lançamento: receita ou despesa.
 ///
-/// Despesas podem ser à vista (fora do cartão) ou no cartão, parceladas ou
-/// não. No cartão, viram uma compra na fatura correspondente.
+/// - Avulso: vale só para a data informada.
+/// - Fixo ("repetir todo mês"): vira uma receita ou despesa fixa nas
+///   configurações, a partir da data informada.
+/// - Despesas avulsas podem ser no cartão, parceladas ou não, e viram uma
+///   compra na fatura (cujo mês pode ser ajustado).
 class OneOffEntryFormPage extends ConsumerStatefulWidget {
   const OneOffEntryFormPage({this.initialKind = EntryKind.expense, super.key});
 
@@ -40,9 +50,15 @@ class _OneOffEntryFormPageState extends ConsumerState<OneOffEntryFormPage> {
   /// Cartão escolhido; `null` = fora do cartão.
   int? _cardId;
   bool _isInstallment = false;
+  bool _isRecurring = false;
   YearMonth? _invoiceMonth;
+  int? _categoryId;
 
-  bool get _onCard => _kind == EntryKind.expense && _cardId != null;
+  bool get _isExpense => _kind == EntryKind.expense;
+
+  /// Compra no cartão (só despesas avulsas; fixas no cartão entram na fatura
+  /// pela regra da despesa fixa).
+  bool get _isCardPurchase => _isExpense && _cardId != null && !_isRecurring;
 
   int get _installmentCount =>
       _isInstallment ? (int.tryParse(_installments.text) ?? 0) : 1;
@@ -58,17 +74,46 @@ class _OneOffEntryFormPageState extends ConsumerState<OneOffEntryFormPage> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final amount = parseCents(_amount.text)!;
-    if (_onCard) {
+    final description = _description.text;
+    if (_isRecurring && _isExpense) {
+      await ref
+          .read(fixedExpenseRepositoryProvider)
+          .create(
+            FixedExpenseInput(
+              description: description,
+              defaultAmountCents: amount,
+              dueDay: _date.day,
+              active: true,
+              creditCardId: _cardId,
+              startMonth: YearMonth.fromDate(_date),
+              categoryId: _categoryId,
+            ),
+          );
+    } else if (_isRecurring) {
+      await ref
+          .read(incomeRepositoryProvider)
+          .create(
+            IncomeInput(
+              description: description,
+              amountCents: amount,
+              dayOfMonth: _date.day,
+              active: true,
+              startMonth: YearMonth.fromDate(_date),
+              categoryId: _categoryId,
+            ),
+          );
+    } else if (_isCardPurchase) {
       await ref
           .read(cardPurchaseRepositoryProvider)
           .create(
             CardPurchaseDraft(
               cardId: _cardId!,
-              description: _description.text,
+              description: description,
               totalCents: amount,
               purchaseDate: _date,
               installmentCount: _installmentCount,
               firstInvoiceMonth: _invoiceMonth,
+              categoryId: _categoryId,
             ),
           );
     } else {
@@ -77,13 +122,31 @@ class _OneOffEntryFormPageState extends ConsumerState<OneOffEntryFormPage> {
           .create(
             OneOffEntryDraft(
               kind: _kind,
-              description: _description.text,
+              description: description,
               amountCents: amount,
               date: _date,
+              categoryId: _categoryId,
             ),
           );
     }
-    if (mounted) context.pop();
+    if (!mounted) return;
+    if (_isRecurring) {
+      showMessage(
+        context,
+        '${_isExpense ? 'Despesa fixa salva' : 'Receita fixa salva'} '
+        'em Configurações',
+      );
+    }
+    context.pop();
+  }
+
+  String get _dateLabel {
+    if (_isRecurring) {
+      return _isExpense
+          ? 'Próxima data de pagamento'
+          : 'Próxima data de recebimento';
+    }
+    return _isCardPurchase ? 'Data da compra' : 'Data';
   }
 
   @override
@@ -120,9 +183,12 @@ class _OneOffEntryFormPageState extends ConsumerState<OneOffEntryFormPage> {
               controller: _description,
               decoration: InputDecoration(
                 labelText: 'Descrição',
-                hintText: _kind == EntryKind.expense
-                    ? 'Ex.: Exame'
-                    : 'Ex.: Freela',
+                hintText: switch ((_isExpense, _isRecurring)) {
+                  (true, true) => 'Ex.: Internet',
+                  (true, false) => 'Ex.: Exame',
+                  (false, true) => 'Ex.: Salário',
+                  (false, false) => 'Ex.: Freela',
+                },
               ),
               textCapitalization: TextCapitalization.sentences,
               validator: requiredText,
@@ -130,27 +196,48 @@ class _OneOffEntryFormPageState extends ConsumerState<OneOffEntryFormPage> {
             const FormGap(),
             MoneyField(
               controller: _amount,
-              label: _onCard ? 'Valor total' : 'Valor',
+              label: _isCardPurchase ? 'Valor total' : 'Valor',
               onChanged: (_) => setState(() {}),
             ),
             const FormGap(),
+            SwitchListTile(
+              title: Text(_isExpense ? 'Despesa fixa' : 'Receita fixa'),
+              subtitle: const Text('Repete todo mês a partir da data'),
+              value: _isRecurring,
+              onChanged: (value) => setState(() => _isRecurring = value),
+              contentPadding: EdgeInsets.zero,
+            ),
+            const FormGap(),
             DateField(
-              label: _onCard ? 'Data da compra' : 'Data',
+              label: _dateLabel,
+              helperText: _isRecurring
+                  ? 'Todo dia ${_date.day}, a partir de '
+                        '${formatDayMonthName(_date)}'
+                  : null,
               value: _date,
               onChanged: (date) => setState(() {
                 _date = dateOnly(date);
                 _invoiceMonth = null;
               }),
             ),
-            if (_kind == EntryKind.expense) ...[
+            const FormGap(),
+            CategoryField(
+              value: _categoryId,
+              onChanged: (value) => setState(() => _categoryId = value),
+            ),
+            if (_isExpense) ...[
               const FormGap(),
               DropdownButtonFormField<int?>(
                 initialValue: _cardId,
                 decoration: const InputDecoration(labelText: 'Pagamento'),
                 items: [
-                  const DropdownMenuItem(
+                  DropdownMenuItem(
                     value: null,
-                    child: Text('À vista, fora do cartão'),
+                    child: Text(
+                      _isRecurring
+                          ? 'Fora do cartão'
+                          : 'À vista, fora do cartão',
+                    ),
                   ),
                   for (final c in cards)
                     DropdownMenuItem(
@@ -164,7 +251,7 @@ class _OneOffEntryFormPageState extends ConsumerState<OneOffEntryFormPage> {
                 }),
               ),
             ],
-            if (_onCard) ...[
+            if (_isCardPurchase) ...[
               const FormGap(),
               InstallmentSelector(
                 enabled: _isInstallment,

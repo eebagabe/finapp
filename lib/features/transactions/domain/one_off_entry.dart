@@ -9,6 +9,7 @@ class OneOffEntry {
     required this.amountCents,
     required this.date,
     this.paidAt,
+    this.categoryId,
   });
 
   final int id;
@@ -19,6 +20,7 @@ class OneOffEntry {
 
   /// Data em que foi paga (despesa) ou recebida (receita).
   final DateTime? paidAt;
+  final int? categoryId;
 }
 
 class OneOffEntryDraft {
@@ -27,10 +29,12 @@ class OneOffEntryDraft {
     required this.description,
     required this.amountCents,
     required this.date,
+    this.categoryId,
   });
 
   final EntryKind kind;
   final String description;
   final int amountCents;
   final DateTime date;
+  final int? categoryId;
 }

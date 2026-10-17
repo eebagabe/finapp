@@ -31,6 +31,7 @@ class OneOffEntryRepository {
           description: draft.description.trim(),
           amountCents: draft.amountCents,
           date: draft.date,
+          categoryId: Value(draft.categoryId),
         ),
       );
 
@@ -52,6 +53,7 @@ class OneOffEntryRepository {
     amountCents: row.amountCents,
     date: row.date,
     paidAt: row.paidAt,
+    categoryId: row.categoryId,
   );
 }
 

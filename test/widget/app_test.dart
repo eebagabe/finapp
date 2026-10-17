@@ -84,4 +84,34 @@ void main() {
 
     await dispose(tester, db);
   });
+
+  testWidgets('lançamento marcado como fixo vira despesa fixa', (tester) async {
+    final db = await pumpApp(tester);
+
+    await tester.tap(find.text('Lançamentos'));
+    await settle(tester);
+    await tester.tap(find.byTooltip('Novo lançamento'));
+    await settle(tester);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Descrição'),
+      'Internet',
+    );
+    await tester.enterText(find.widgetWithText(TextFormField, 'Valor'), '9990');
+    await tester.tap(find.text('Despesa fixa'));
+    await settle(tester);
+    await tester.ensureVisible(find.text('Salvar'));
+    await settle(tester);
+    await tester.tap(find.text('Salvar'));
+    await settle(tester);
+
+    final expenses = await tester.runAsync(
+      () => FixedExpenseRepository(db).getAll(),
+    );
+    final internet = expenses!.singleWhere((e) => e.description == 'Internet');
+    expect(internet.defaultAmountCents, 9990);
+    expect(internet.dueDay, DateTime.now().day);
+
+    await dispose(tester, db);
+  });
 }

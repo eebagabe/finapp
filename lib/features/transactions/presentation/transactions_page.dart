@@ -38,7 +38,7 @@ class TransactionsPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Lançamentos')),
       floatingActionButton: FloatingActionButton(
-        tooltip: 'Novo lançamento avulso',
+        tooltip: 'Novo lançamento',
         onPressed: () => context.push(AppRoutes.newOneOffEntry),
         child: const Icon(Icons.add),
       ),
