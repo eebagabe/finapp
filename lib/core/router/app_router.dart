@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/credit_cards/presentation/credit_card_form_page.dart';
 import '../../features/credit_cards/presentation/credit_cards_page.dart';
 import '../../features/debts/presentation/debts_page.dart';
+import '../../features/incomes/presentation/income_form_page.dart';
 import '../../features/registrations/presentation/registrations_page.dart';
 import '../../features/summary/presentation/summary_page.dart';
 import '../../features/transactions/presentation/transactions_page.dart';
@@ -19,6 +20,9 @@ abstract final class AppRoutes {
 
   static const newCard = '$cards/novo';
   static String editCard(int id) => '$cards/$id/editar';
+
+  static const newIncome = '$registrations/receitas/nova';
+  static String editIncome(int id) => '$registrations/receitas/$id';
 }
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -85,6 +89,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: AppRoutes.registrations,
                 builder: (context, state) => const RegistrationsPage(),
+                routes: [
+                  GoRoute(
+                    path: 'receitas/nova',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => const IncomeFormPage(),
+                  ),
+                  GoRoute(
+                    path: 'receitas/:id',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) =>
+                        IncomeFormPage(incomeId: _id(state)),
+                  ),
+                ],
               ),
             ],
           ),
