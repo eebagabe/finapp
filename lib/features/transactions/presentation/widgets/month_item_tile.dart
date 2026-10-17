@@ -48,18 +48,24 @@ class MonthItemTile extends ConsumerWidget {
             ),
       title: Text(
         item.title,
-        style: item.isPaid ? TextStyle(color: colors.mutedText) : null,
-      ),
-      subtitle: Text(details),
-      trailing: Text(
-        '${item.isIncome ? '+ ' : ''}${formatCents(item.amountCents)}',
-        style: textTheme.bodyLarge?.copyWith(
+        style: textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.w500,
-          color: !item.countsInTotals || item.isPaid
+          color: item.isPaid ? colors.mutedText : null,
+        ),
+      ),
+      subtitle: Text(
+        details,
+        style: textTheme.bodySmall?.copyWith(color: colors.mutedText),
+      ),
+      trailing: Text(
+        '${item.isIncome ? '+ ' : '- '}${formatCents(item.amountCents)}',
+        style: textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: !item.countsInTotals
               ? colors.mutedText
-              : item.isIncome
-              ? colors.positive
-              : null,
+              : (item.isIncome ? colors.positive : colors.deficit).withValues(
+                  alpha: item.isPaid ? 0.6 : 1,
+                ),
         ),
       ),
       onTap: () => showMonthItemSheet(context, item: item, month: month),
