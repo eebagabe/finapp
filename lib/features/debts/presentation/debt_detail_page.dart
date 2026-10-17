@@ -88,6 +88,27 @@ class _DebtDetail extends ConsumerWidget {
                   '${payoff == null ? '' : ' · quita em ${formatDate(payoff)}'}',
                   style: textTheme.bodySmall?.copyWith(color: muted),
                 ),
+                if (debt.discountCents > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Economizado em antecipações: '
+                      '${formatCents(debt.discountCents)}',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: context.appColors.positive,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                if (!debt.isSettled) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () =>
+                        context.push(AppRoutes.prepayDebt(debt.id)),
+                    icon: const Icon(Icons.fast_forward_outlined),
+                    label: const Text('Antecipar parcelas'),
+                  ),
+                ],
               ],
             ),
           ),
@@ -101,10 +122,19 @@ class _DebtDetail extends ConsumerWidget {
                     value: installment.isPaid,
                     onChanged: (_) => _togglePaid(ref, installment),
                     title: Text(
-                      '${installment.number}ª · ${formatDate(installment.dueDate)}',
+                      '${installment.number}ª · '
+                      '${formatDate(installment.scheduledDate)}',
                     ),
                     subtitle: installment.isPaid
-                        ? Text('Paga em ${formatDate(installment.paidAt!)}')
+                        ? Text(
+                            [
+                              if (installment.isAnticipated) 'Antecipada',
+                              'paga em ${formatDate(installment.paidAt!)}',
+                              if (installment.discountCents != null)
+                                'desconto '
+                                    '${formatCents(installment.discountCents!)}',
+                            ].join(' · '),
+                          )
                         : null,
                     secondary: Text(
                       formatCents(installment.amountCents),

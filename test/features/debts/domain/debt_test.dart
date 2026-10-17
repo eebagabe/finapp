@@ -61,4 +61,18 @@ void main() {
     expect(settled.nextInstallment, isNull);
     expect(settled.installmentAmountCents, 5000);
   });
+
+  group('distributePrepayment', () {
+    test('divide proporcionalmente, resto na última', () {
+      expect(distributePrepayment([10000, 10000, 10001], 15000), [
+        4999,
+        4999,
+        5002,
+      ]);
+    });
+
+    test('valor cheio mantém as parcelas', () {
+      expect(distributePrepayment([33333, 33334], 66667), [33333, 33334]);
+    });
+  });
 }

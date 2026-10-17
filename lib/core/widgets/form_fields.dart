@@ -22,6 +22,9 @@ class MoneyField extends StatelessWidget {
   final bool required;
   final ValueChanged<int?>? onChanged;
 
+  /// Máscara de valor, para campos de dinheiro montados fora deste widget.
+  static const formatters = [CurrencyInputFormatter()];
+
   /// Texto inicial do campo para um valor em centavos.
   static String initialText(int? cents) =>
       cents == null || cents == 0 ? '' : formatCents(cents);
@@ -32,7 +35,7 @@ class MoneyField extends StatelessWidget {
       controller: controller,
       decoration: InputDecoration(labelText: label, hintText: r'R$ 0,00'),
       keyboardType: TextInputType.number,
-      inputFormatters: const [CurrencyInputFormatter()],
+      inputFormatters: formatters,
       onChanged: onChanged == null
           ? null
           : (text) => onChanged!(parseCents(text)),

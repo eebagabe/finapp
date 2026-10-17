@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/watch_query.dart';
+import '../../../core/domain/year_month.dart';
 import '../../../core/providers/database_provider.dart';
 import '../domain/debt.dart';
 import '../domain/debt_schedule.dart';
@@ -84,6 +85,62 @@ class DebtRepository {
         _db.debtInstallments,
       )..where((t) => t.debtId.equals(id) & t.paidAt.isNull())).go();
       await _insertPlan(id, draft.plan(firstNumber: lastPaidNumber + 1));
+      await _renumber(id);
+    });
+  }
+
+  /// Renumera as parcelas pela data prevista (antecipadas mantêm a posição
+  /// do vencimento original).
+  Future<void> _renumber(int debtId) async {
+    final debt = await getById(debtId);
+    if (debt == null) return;
+    final ordered = [...debt.installments]
+      ..sort((a, b) {
+        final byDate = a.scheduledDate.compareTo(b.scheduledDate);
+        return byDate != 0 ? byDate : a.id.compareTo(b.id);
+      });
+    for (final (index, installment) in ordered.indexed) {
+      if (installment.number == index + 1) continue;
+      await (_db.update(_db.debtInstallments)
+            ..where((t) => t.id.equals(installment.id)))
+          .write(DebtInstallmentsCompanion(number: Value(index + 1)));
+    }
+  }
+
+  /// Antecipa o pagamento das parcelas [installmentIds] em [paidAt], pagando
+  /// [paidCents] no total (menos que a soma = desconto).
+  ///
+  /// Cada parcela passa a valer sua parte do valor pago, com vencimento na
+  /// data do pagamento; o valor e o vencimento originais ficam guardados para
+  /// desfazer.
+  Future<void> prepay({
+    required List<int> installmentIds,
+    required int paidCents,
+    required DateTime paidAt,
+  }) {
+    return _db.transaction(() async {
+      final rows =
+          await (_db.select(_db.debtInstallments)
+                ..where((t) => t.id.isIn(installmentIds) & t.paidAt.isNull())
+                ..orderBy([(t) => OrderingTerm.asc(t.number)]))
+              .get();
+      final shares = distributePrepayment([
+        for (final row in rows) row.amountCents,
+      ], paidCents);
+      for (final (index, row) in rows.indexed) {
+        final discount = row.amountCents - shares[index];
+        await (_db.update(
+          _db.debtInstallments,
+        )..where((t) => t.id.equals(row.id))).write(
+          DebtInstallmentsCompanion(
+            amountCents: Value(shares[index]),
+            discountCents: Value(discount == 0 ? null : discount),
+            originalDueDate: Value(row.dueDate),
+            dueDate: Value(dateOnly(paidAt)),
+            paidAt: Value(paidAt),
+          ),
+        );
+      }
     });
   }
 
@@ -92,10 +149,29 @@ class DebtRepository {
   }
 
   /// Marca a parcela como paga em [paidAt] ou, se nulo, desfaz o pagamento.
-  Future<void> setInstallmentPaid(int installmentId, DateTime? paidAt) async {
-    await (_db.update(_db.debtInstallments)
-          ..where((t) => t.id.equals(installmentId)))
-        .write(DebtInstallmentsCompanion(paidAt: Value(paidAt)));
+  ///
+  /// Desfazer uma antecipação restaura o valor e o vencimento originais.
+  Future<void> setInstallmentPaid(int installmentId, DateTime? paidAt) {
+    return _db.transaction(() async {
+      final query = _db.select(_db.debtInstallments)
+        ..where((t) => t.id.equals(installmentId));
+      final row = await query.getSingleOrNull();
+      if (row == null) return;
+      final restore = paidAt == null && row.originalDueDate != null;
+      await (_db.update(
+        _db.debtInstallments,
+      )..where((t) => t.id.equals(installmentId))).write(
+        restore
+            ? DebtInstallmentsCompanion(
+                paidAt: const Value(null),
+                amountCents: Value(row.amountCents + (row.discountCents ?? 0)),
+                dueDate: Value(row.originalDueDate!),
+                discountCents: const Value(null),
+                originalDueDate: const Value(null),
+              )
+            : DebtInstallmentsCompanion(paidAt: Value(paidAt)),
+      );
+    });
   }
 
   Future<void> _insertPlan(int debtId, List<PlannedInstallment> plan) async {
@@ -129,6 +205,8 @@ class DebtRepository {
         dueDate: row.dueDate,
         amountCents: row.amountCents,
         paidAt: row.paidAt,
+        discountCents: row.discountCents,
+        originalDueDate: row.originalDueDate,
       );
 }
 

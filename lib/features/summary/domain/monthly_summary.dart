@@ -192,7 +192,9 @@ MonthlySummary calculateMonthlySummary({
           sourceId: installment.id,
           parentId: debt.id,
           title: debt.description,
-          subtitle: 'parcela ${installment.number} de $total',
+          subtitle: installment.isAnticipated
+              ? 'parcela ${installment.number} de $total · antecipada'
+              : 'parcela ${installment.number} de $total',
           amountCents: installment.amountCents,
           date: installment.dueDate,
           paidAt: installment.paidAt,

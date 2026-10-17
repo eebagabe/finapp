@@ -95,4 +95,66 @@ void main() {
     await repository.setInstallmentPaid(installment.id, DateTime.now());
     await expectation;
   });
+
+  group('antecipação', () {
+    test(
+      'paga as últimas parcelas com desconto e move para a data paga',
+      () async {
+        final id = await repository.create(draft(remaining: 4, amount: 10000));
+        final debt = (await repository.getById(id))!;
+        final lastTwo = debt.installments.skip(2).map((i) => i.id).toList();
+
+        await repository.prepay(
+          installmentIds: lastTwo,
+          paidCents: 10000,
+          paidAt: DateTime(2026, 10, 16),
+        );
+
+        final after = (await repository.getById(id))!;
+        final prepaid = after.installments.skip(2).toList();
+        expect(prepaid.map((i) => i.amountCents), [5000, 5000]);
+        expect(prepaid.map((i) => i.discountCents), [5000, 5000]);
+        expect(
+          prepaid.map((i) => i.dueDate),
+          everyElement(DateTime(2026, 10, 16)),
+        );
+        expect(prepaid.first.scheduledDate, DateTime(2027, 1, 21));
+        expect(after.discountCents, 10000);
+        expect(after.remainingCents, 20000);
+        expect(after.payoffDate, DateTime(2026, 12, 21));
+      },
+    );
+
+    test('desfazer restaura valor e vencimento originais', () async {
+      final id = await repository.create(draft(remaining: 2, amount: 10000));
+      final last = (await repository.getById(id))!.installments.last;
+      await repository.prepay(
+        installmentIds: [last.id],
+        paidCents: 7000,
+        paidAt: DateTime(2026, 10, 16),
+      );
+
+      await repository.setInstallmentPaid(last.id, null);
+
+      final restored = (await repository.getById(id))!.installments.last;
+      expect(restored.amountCents, 10000);
+      expect(restored.dueDate, DateTime(2026, 12, 21));
+      expect(restored.discountCents, isNull);
+      expect(restored.isAnticipated, isFalse);
+      expect(restored.isPaid, isFalse);
+    });
+
+    test('sem desconto mantém o valor', () async {
+      final id = await repository.create(draft(remaining: 2, amount: 10000));
+      final last = (await repository.getById(id))!.installments.last;
+      await repository.prepay(
+        installmentIds: [last.id],
+        paidCents: 10000,
+        paidAt: DateTime(2026, 10, 16),
+      );
+      final paid = (await repository.getById(id))!.installments.last;
+      expect(paid.amountCents, 10000);
+      expect(paid.discountCents, isNull);
+    });
+  });
 }

@@ -8,6 +8,7 @@ import '../../features/credit_cards/presentation/credit_card_form_page.dart';
 import '../../features/credit_cards/presentation/credit_cards_page.dart';
 import '../../features/debts/presentation/debt_detail_page.dart';
 import '../../features/debts/presentation/debt_form_page.dart';
+import '../../features/debts/presentation/debt_prepay_page.dart';
 import '../../features/debts/presentation/debts_page.dart';
 import '../../features/fixed_expenses/presentation/fixed_expense_form_page.dart';
 import '../../features/incomes/presentation/income_form_page.dart';
@@ -29,6 +30,7 @@ abstract final class AppRoutes {
   static const newDebt = '$debts/nova';
   static String debtDetail(int id) => '$debts/$id';
   static String editDebt(int id) => '$debts/$id/editar';
+  static String prepayDebt(int id) => '$debts/$id/antecipar';
 
   static const newCard = '$cards/novo';
   static String cardDetail(int id) => '$cards/$id';
@@ -101,6 +103,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                         parentNavigatorKey: _rootNavigatorKey,
                         builder: (context, state) =>
                             DebtFormPage(debtId: _id(state)),
+                      ),
+                      GoRoute(
+                        path: 'antecipar',
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) =>
+                            DebtPrepayPage(debtId: _id(state)),
                       ),
                     ],
                   ),
