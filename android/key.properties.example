@@ -1,0 +1,5 @@
+# Copie para android/key.properties (ignorado pelo git) e ajuste os valores.
+storeFile=/caminho/para/finapp-release.jks
+storePassword=SUA_SENHA
+keyAlias=finapp
+keyPassword=SUA_SENHA
