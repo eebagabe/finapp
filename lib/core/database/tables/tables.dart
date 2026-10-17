@@ -18,6 +18,23 @@ class CreditCards extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
+/// Categorias escolhidas nos lançamentos (ex.: Moradia, Alimentação).
+@DataClassName('CategoryRow')
+class Categories extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().withLength(min: 1, max: 40)();
+}
+
+/// Preferências do app (chave → valor). Não são apagadas ao zerar o sistema.
+@DataClassName('AppSettingRow')
+class AppSettings extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+
+  @override
+  Set<Column> get primaryKey => {key};
+}
+
 /// Receitas fixas (mensais). Receitas avulsas ficam em [OneOffEntries].
 @DataClassName('IncomeRow')
 class Incomes extends Table {
@@ -29,6 +46,12 @@ class Incomes extends Table {
 
   /// Primeiro mês (`yyyymm`) em que a receita vale.
   IntColumn get startMonth => integer()();
+
+  IntColumn get categoryId => integer().nullable().references(
+    Categories,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
 }
 
 @DataClassName('FixedExpenseRow')
@@ -48,6 +71,12 @@ class FixedExpenses extends Table {
 
   /// Primeiro mês (`yyyymm`) em que a despesa vale.
   IntColumn get startMonth => integer()();
+
+  IntColumn get categoryId => integer().nullable().references(
+    Categories,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
 }
 
 @DataClassName('DebtRow')
@@ -71,6 +100,13 @@ class DebtInstallments extends Table {
   DateTimeColumn get dueDate => dateTime()();
   IntColumn get amountCents => integer()();
   DateTimeColumn get paidAt => dateTime().nullable()();
+
+  /// Desconto obtido ao antecipar a parcela ([amountCents] já é o valor pago).
+  IntColumn get discountCents => integer().nullable()();
+
+  /// Vencimento original de uma parcela antecipada ([dueDate] passa a ser a
+  /// data do pagamento).
+  DateTimeColumn get originalDueDate => dateTime().nullable()();
 }
 
 @DataClassName('CardPurchaseRow')
@@ -84,6 +120,16 @@ class CardPurchases extends Table {
 
   /// 1 = à vista.
   IntColumn get installmentCount => integer()();
+
+  /// Fatura (`yyyymm`) da 1ª parcela escolhida manualmente. Nulo = pela
+  /// regra de fechamento do cartão.
+  IntColumn get firstInvoiceMonth => integer().nullable()();
+
+  IntColumn get categoryId => integer().nullable().references(
+    Categories,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
 }
 
 @TableIndex(
@@ -112,6 +158,12 @@ class OneOffEntries extends Table {
   IntColumn get amountCents => integer()();
   DateTimeColumn get date => dateTime()();
   DateTimeColumn get paidAt => dateTime().nullable()();
+
+  IntColumn get categoryId => integer().nullable().references(
+    Categories,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
 }
 
 /// Ajustes e status mensais de itens recorrentes (receitas fixas, despesas

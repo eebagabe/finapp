@@ -9,6 +9,8 @@ part 'app_database.g.dart';
 
 @DriftDatabase(
   tables: [
+    Categories,
+    AppSettings,
     CreditCards,
     Incomes,
     FixedExpenses,
@@ -29,16 +31,60 @@ class AppDatabase extends _$AppDatabase {
   /// 2. rode `dart run drift_dev make-migrations`;
   /// 3. adicione o passo correspondente em [migration].
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  /// Categorias criadas na instalação e ao zerar o sistema.
+  static const defaultCategories = [
+    'Moradia',
+    'Alimentação',
+    'Transporte',
+    'Saúde',
+    'Educação',
+    'Lazer',
+    'Assinaturas',
+    'Salário',
+    'Outros',
+  ];
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-    onCreate: (m) => m.createAll(),
+    onCreate: (m) async {
+      await m.createAll();
+      await _seedCategories();
+    },
     onUpgrade: (m, from, to) async {
-      // Passos de migração versionados entram aqui (from 1 to 2, ...).
+      if (from < 2) {
+        await m.createTable(categories);
+        await m.createTable(appSettings);
+        await m.addColumn(incomes, incomes.categoryId);
+        await m.addColumn(fixedExpenses, fixedExpenses.categoryId);
+        await m.addColumn(oneOffEntries, oneOffEntries.categoryId);
+        await m.addColumn(cardPurchases, cardPurchases.categoryId);
+        await m.addColumn(cardPurchases, cardPurchases.firstInvoiceMonth);
+        await m.addColumn(debtInstallments, debtInstallments.discountCents);
+        await m.addColumn(debtInstallments, debtInstallments.originalDueDate);
+        await _seedCategories();
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+
+  Future<void> _seedCategories() => batch(
+    (b) => b.insertAll(categories, [
+      for (final name in defaultCategories)
+        CategoriesCompanion.insert(name: name),
+    ]),
+  );
+
+  /// Apaga todos os dados cadastrados e recria as categorias padrão.
+  /// Preferências ([appSettings]) são mantidas.
+  Future<void> resetAllData() => transaction(() async {
+    for (final table in allTables) {
+      if (table == appSettings) continue;
+      await delete(table).go();
+    }
+    await _seedCategories();
+  });
 }

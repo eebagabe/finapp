@@ -72,4 +72,36 @@ void main() {
       throwsA(isA<SqliteException>()),
     );
   });
+
+  test(
+    'zerar apaga os dados, mantém preferências e recria categorias',
+    () async {
+      await db
+          .into(db.creditCards)
+          .insert(
+            CreditCardsCompanion.insert(
+              name: 'Nubank',
+              closingDay: 1,
+              dueDay: 8,
+            ),
+          );
+      await db
+          .into(db.categories)
+          .insert(CategoriesCompanion.insert(name: 'X'));
+      await db
+          .into(db.appSettings)
+          .insert(
+            AppSettingsCompanion.insert(key: 'theme_mode', value: 'dark'),
+          );
+
+      await db.resetAllData();
+
+      expect(await db.select(db.creditCards).get(), isEmpty);
+      expect(
+        (await db.select(db.categories).get()).map((c) => c.name),
+        AppDatabase.defaultCategories,
+      );
+      expect(await db.select(db.appSettings).get(), hasLength(1));
+    },
+  );
 }
